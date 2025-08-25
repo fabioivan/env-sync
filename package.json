@@ -1,0 +1,38 @@
+{
+  "name": "env-sync",
+  "version": "1.0.0",
+  "description": "Ferramenta para sincronização de configurações de banco de dados em projetos C# e React",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main.js",
+    "dev": "ts-node src/main.ts",
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "help": "npm run dev -- --help",
+    "watch": "tsc --watch"
+  },
+  "keywords": [
+    "database",
+    "configuration",
+    "sync",
+    "csharp",
+    "react",
+    "port-management",
+    "connection-string"
+  ],
+  "author": "Voalle",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "rimraf": "^5.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "bin": {
+    "env-sync": "./dist/main.js"
+  }
+}
