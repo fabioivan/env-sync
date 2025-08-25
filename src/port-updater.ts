@@ -1,4 +1,6 @@
 import { DatabaseFileFinder } from "./file-finder"
+import { DockerManager } from "./docker-manager"
+import { InputHandler } from "./input-handler"
 
 /**
  * Interface para o resultado da atualização de portas
@@ -22,6 +24,7 @@ export class PortUpdater {
   private readonly fileFinder: DatabaseFileFinder
   private updatedFiles: string[] = []
   private failedFiles: string[] = []
+  private synAuthUpdatedFiles: string[] = []
 
   constructor() {
     this.fileFinder = new DatabaseFileFinder()
@@ -47,6 +50,11 @@ export class PortUpdater {
     for (const filePath of databaseFiles) {
       if (this.updatePortInFile(filePath, newPort)) {
         this.updatedFiles.push(filePath)
+
+        // Verifica se é arquivo do SynAuth
+        if (this.isSynAuthFile(filePath)) {
+          this.synAuthUpdatedFiles.push(filePath)
+        }
       } else {
         this.failedFiles.push(filePath)
       }
@@ -215,6 +223,7 @@ export class PortUpdater {
   reset(): void {
     this.updatedFiles = []
     this.failedFiles = []
+    this.synAuthUpdatedFiles = []
   }
 
   /**
@@ -234,5 +243,58 @@ export class PortUpdater {
   static isValidPort(port: string): boolean {
     const portNumber = parseInt(port, 10)
     return !isNaN(portNumber) && portNumber > 0 && portNumber <= 65535
+  }
+
+  /**
+   * Verifica se um arquivo pertence ao projeto SynAuth.
+   */
+  private isSynAuthFile(filePath: string): boolean {
+    return filePath.toLowerCase().includes("synauth")
+  }
+
+  /**
+   * Verifica se houve atualizações no SynAuth.
+   */
+  hasSynAuthUpdates(): boolean {
+    return this.synAuthUpdatedFiles.length > 0
+  }
+
+  /**
+   * Obtém a lista de arquivos do SynAuth que foram atualizados.
+   */
+  getSynAuthUpdatedFiles(): string[] {
+    return [...this.synAuthUpdatedFiles]
+  }
+
+  /**
+   * Gerencia o restart do Docker para o SynAuth se necessário.
+   */
+  async handleSynAuthDockerRestart(inputHandler: InputHandler): Promise<void> {
+    if (!this.hasSynAuthUpdates()) {
+      return
+    }
+
+    const dockerManager = new DockerManager(inputHandler)
+
+    try {
+      // Pergunta ao usuário se quer fazer o restart
+      const shouldRestart = await dockerManager.askForSynAuthRestart()
+
+      if (shouldRestart) {
+        // Encontra o diretório do projeto SynAuth
+        const synAuthFile = this.synAuthUpdatedFiles[0]
+        const projectRoot = dockerManager.findSynAuthProjectRoot(synAuthFile)
+
+        if (projectRoot) {
+          await dockerManager.rebuildSynAuthContainer(projectRoot)
+        } else {
+          console.log("❌ Não foi possível localizar o diretório raiz do projeto SynAuth.")
+        }
+      } else {
+        console.log("ℹ️  Restart do container SynAuth cancelado pelo usuário.")
+      }
+    } catch (error) {
+      console.error(`❌ Erro ao gerenciar Docker do SynAuth: ${error}`)
+    }
   }
 }

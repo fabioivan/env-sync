@@ -122,11 +122,11 @@ export class DatabaseFileFinder {
   writeDatabaseSettings(filePath: string, content: Record<string, any>): boolean {
     try {
       // Faz backup do arquivo original
-      const backupPath = `${filePath}.backup`
-      if (fs.existsSync(filePath)) {
-        fs.copyFileSync(filePath, backupPath)
-        console.log(`Backup criado: ${backupPath}`)
-      }
+      // const backupPath = `${filePath}.backup`
+      // if (fs.existsSync(filePath)) {
+      //   fs.copyFileSync(filePath, backupPath)
+      //   console.log(`Backup criado: ${backupPath}`)
+      // }
 
       const jsonContent = JSON.stringify(content, null, 4)
       fs.writeFileSync(filePath, jsonContent, "utf-8")

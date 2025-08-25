@@ -64,7 +64,7 @@ export class EnvSyncApp {
       }
 
       // Executa a atualização
-      this.executeUpdate(environment.port)
+      await this.executeUpdate(environment.port)
     } catch (error) {
       if (error instanceof Error && error.message === "SIGINT") {
         console.log("\n❌ Operação cancelada pelo usuário.")
@@ -216,7 +216,7 @@ export class EnvSyncApp {
   /**
    * Executa a atualização das portas.
    */
-  private executeUpdate(newPort: string): void {
+  private async executeUpdate(newPort: string): Promise<void> {
     console.log("\n🚀 Executando atualização...")
     console.log("=".repeat(50))
 
@@ -236,6 +236,9 @@ export class EnvSyncApp {
       console.log("\n⚠️  Alguns arquivos não puderam ser atualizados:")
       console.log(`   ${result.failedFiles.length} arquivo(s) com erro`)
     }
+
+    // Verifica se houve atualizações no SynAuth e oferece restart do Docker
+    await this.portUpdater.handleSynAuthDockerRestart(this.inputHandler)
   }
 
   /**
