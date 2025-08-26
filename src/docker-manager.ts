@@ -5,7 +5,6 @@ import * as path from "path"
  * Gerencia operações Docker para projetos específicos.
  */
 export class DockerManager {
-
   /**
    * Verifica se um arquivo é do projeto SynAuth.
    */
@@ -98,6 +97,66 @@ export class DockerManager {
   }
 
   /**
+   * Verifica informações do Docker instalado.
+   */
+  private async checkDockerInfo(): Promise<{
+    docker: boolean
+    compose: string | null
+    version: string | null
+  }> {
+    const { execSync } = await import("child_process")
+
+    let dockerVersion = null
+    let composeCommand = null
+
+    // Verifica se Docker está instalado
+    try {
+      const output = execSync("docker --version", { stdio: "pipe", encoding: "utf-8" })
+      dockerVersion = output.trim()
+    } catch {
+      return { docker: false, compose: null, version: null }
+    }
+
+    // Verifica comando Docker Compose
+    try {
+      execSync("docker compose version", { stdio: "pipe" })
+      composeCommand = "docker compose"
+    } catch {
+      try {
+        execSync("docker-compose version", { stdio: "pipe" })
+        composeCommand = "docker-compose"
+      } catch {
+        // Docker está instalado mas Compose não
+      }
+    }
+
+    return {
+      docker: true,
+      compose: composeCommand,
+      version: dockerVersion,
+    }
+  }
+
+  /**
+   * Verifica qual comando Docker Compose usar (docker compose vs docker-compose).
+   */
+  private async getDockerComposeCommand(): Promise<string> {
+    const dockerInfo = await this.checkDockerInfo()
+
+    if (!dockerInfo.docker) {
+      throw new Error("Docker não está instalado ou não está no PATH")
+    }
+
+    if (!dockerInfo.compose) {
+      throw new Error(
+        "Docker Compose não está disponível (nem 'docker compose' nem 'docker-compose')",
+      )
+    }
+
+    return dockerInfo.compose
+  }
+
+  /**
    * Tenta rebuild usando docker-compose.
    */
   private async tryDockerCompose(projectRoot: string): Promise<boolean> {
@@ -105,6 +164,10 @@ export class DockerManager {
 
     const dockerComposePath = path.join(projectRoot, "docker-compose.yml")
     const dockerCompose2Path = path.join(projectRoot, "docker-compose.yaml")
+
+    console.log("📁 Verificando arquivos Docker Compose...")
+    console.log("   docker-compose.yml:", fs.existsSync(dockerComposePath) ? "✅" : "❌")
+    console.log("   docker-compose.yaml:", fs.existsSync(dockerCompose2Path) ? "✅" : "❌")
 
     let composeFile = ""
     if (fs.existsSync(dockerComposePath)) {
@@ -116,20 +179,33 @@ export class DockerManager {
     }
 
     try {
+      // Verifica informações do Docker
+      const dockerInfo = await this.checkDockerInfo()
+      console.log("🐳 Informações do Docker:")
+      console.log(`   Versão: ${dockerInfo.version}`)
+      console.log(`   Compose: ${dockerInfo.compose}`)
+
+      // Detecta o comando Docker Compose correto
+      const dockerComposeCmd = await this.getDockerComposeCommand()
+      console.log(`🚀 Executando: ${dockerComposeCmd}`)
+
+      console.log("⏹️  Parando containers...")
       // Para os containers
-      execSync(`docker-compose -f "${composeFile}" down`, {
+      execSync(`${dockerComposeCmd} -f "${composeFile}" down`, {
         cwd: projectRoot,
         stdio: "pipe", // Não mostra output
       })
 
+      console.log("🔄 Rebuild e reinicializando containers...")
       // Rebuild e reinicia
-      execSync(`docker-compose -f "${composeFile}" up --build -d`, {
+      execSync(`${dockerComposeCmd} -f "${composeFile}" up --build -d`, {
         cwd: projectRoot,
         stdio: "pipe", // Não mostra output
       })
 
       return true
     } catch (error) {
+      console.log(`❌ Erro no Docker Compose: ${error}`)
       return false
     }
   }
@@ -142,20 +218,37 @@ export class DockerManager {
 
     const dockerfilePath = path.join(projectRoot, "Dockerfile")
 
+    console.log("📁 Verificando Dockerfile...")
+    console.log(`   ${dockerfilePath}:`, fs.existsSync(dockerfilePath) ? "✅" : "❌")
+
     if (!fs.existsSync(dockerfilePath)) {
       return false
     }
 
     try {
-      // Nome da imagem baseado no diretório
-      const imageName = `synauth-${path.basename(projectRoot)}`
+      // Verifica informações do Docker
+      const dockerInfo = await this.checkDockerInfo()
 
+      if (!dockerInfo.docker) {
+        console.log("❌ Docker não está disponível")
+        return false
+      }
+
+      console.log("🐳 Informações do Docker:")
+      console.log(`   Versão: ${dockerInfo.version}`)
+
+      // Nome da imagem baseado no diretório
+      const imageName = `synauth-${path.basename(projectRoot).toLowerCase()}`
+      console.log(`🏷️  Nome da imagem: ${imageName}`)
+
+      console.log("🔨 Construindo imagem...")
       // Build da imagem
       execSync(`docker build -t ${imageName} .`, {
         cwd: projectRoot,
         stdio: "pipe", // Não mostra output
       })
 
+      console.log("⏹️  Parando container existente (se houver)...")
       // Para container existente se houver
       try {
         execSync(`docker stop ${imageName}`, { stdio: "pipe" })
@@ -164,6 +257,7 @@ export class DockerManager {
         // Ignora erro se container não existir
       }
 
+      console.log("🚀 Iniciando novo container...")
       // Inicia novo container
       execSync(`docker run -d --name ${imageName} ${imageName}`, {
         cwd: projectRoot,
@@ -172,6 +266,7 @@ export class DockerManager {
 
       return true
     } catch (error) {
+      console.log(`❌ Erro no Docker: ${error}`)
       return false
     }
   }

@@ -7,15 +7,29 @@ Uma ferramenta Node.js/TypeScript para gerenciar portas de banco de dados em mú
 - **Gerenciamento de Ambientes**: Salve múltiplos ambientes (desenvolvimento, teste, produção)
 - **Busca Automática**: Encontra todos os arquivos `databasesettings.json` na sua pasta home
 - **Atualização Inteligente**: Identifica e atualiza connection strings automaticamente
-- **Backup de Segurança**: Cria backup automático antes de modificar arquivos
 - **Prévia de Mudanças**: Mostra exatamente o que será alterado antes da execução
 - **Interface Amigável**: Interface de linha de comando simples e intuitiva
 
 ## 🚀 Instalação
 
-1. Clone ou baixe o projeto:
+### 📦 Instalação Global (Recomendada)
+
 ```bash
-git clone <url-do-repositorio>
+# Instala globalmente via NPM
+npm install -g @fabioivan/env-sync
+
+# Verifica a instalação
+env-sync --help
+
+# Usa a ferramenta de qualquer diretório
+env-sync
+```
+
+### 🔧 Instalação para Desenvolvimento
+
+1. Clone o projeto:
+```bash
+git clone https://github.com/fabioivan/env-sync.git
 cd env-sync
 ```
 
@@ -25,28 +39,50 @@ node --version
 npm --version
 ```
 
-3. Instale as dependências:
+3. Configure o comando global para desenvolvimento:
 ```bash
-npm install
+npm run setup:global
 ```
 
-4. Compile o projeto:
+4. Teste a instalação:
 ```bash
-npm run build
+env-sync --help
 ```
 
 ## 📖 Como Usar
 
 ### Primeira Execução
 
-Execute o programa:
+Execute o programa (instalação global):
 ```bash
-npm start
+env-sync
 ```
 
-Ou para desenvolvimento:
+Ou durante desenvolvimento:
 ```bash
 npm run dev
+```
+
+### Comandos Disponíveis
+
+```bash
+# Comando principal
+env-sync
+
+# Lista ambientes
+env-sync list
+
+# Adiciona ambiente
+env-sync add
+
+# Remove ambiente  
+env-sync remove "Nome do Ambiente"
+
+# Ajuda
+env-sync --help
+
+# Versão
+env-sync --version
 ```
 
 Na primeira execução, você será solicitado a configurar seu primeiro ambiente:
@@ -67,22 +103,6 @@ Na primeira execução, você será solicitado a configurar seu primeiro ambient
 
 - **Adicionar Ambiente**: Durante a seleção, escolha a opção "0"
 - **Configurações Salvas**: Localizadas em `~/.env-sync/environments.json`
-
-## 📁 Estrutura de Arquivos
-
-```
-env-sync/
-├── src/
-│   ├── main.ts              # Interface principal
-│   ├── config-manager.ts    # Gerenciamento de configurações
-│   ├── file-finder.ts       # Busca e manipulação de arquivos
-│   ├── port-updater.ts      # Atualização de portas
-│   └── input-handler.ts     # Manipulação de entrada do usuário
-├── dist/                    # Arquivos JavaScript compilados
-├── package.json             # Dependências e scripts
-├── tsconfig.json           # Configuração TypeScript
-└── README.md               # Este arquivo
-```
 
 ## 🔍 Formatos de Connection String Suportados
 
@@ -110,16 +130,15 @@ A ferramenta reconhece e atualiza os seguintes formatos:
 }
 ```
 
-## 🛡️ Segurança e Backup
+## 🛡️ Segurança
 
-- **Backup Automático**: Cada arquivo modificado gera um backup `.backup`
 - **Validação JSON**: Verifica integridade antes de salvar
 - **Operação Atômica**: Se falhar em um arquivo, os outros não são afetados
 
 ## 📋 Exemplo de Uso
 
 ```bash
-$ npm start
+$ env-sync
 
 ============================================================
 🔧 ENV-SYNC - Gerenciador de Configurações de Banco
@@ -164,7 +183,6 @@ Deseja continuar com a atualização? (s/n): s
 Encontrados 2 arquivo(s). Iniciando atualização...
 
 Processando: /home/user/projects/MyApp/databasesettings.json
-Backup criado: /home/user/projects/MyApp/databasesettings.json.backup
 ✅ Porta atualizada em ConnectionString: 5433 → 5432
 ✅ Arquivo atualizado com sucesso
 
@@ -183,12 +201,34 @@ Backup criado: /home/user/projects/MyApp/databasesettings.json.backup
 
 Para ver informações de ajuda:
 ```bash
-npm start -- --help
+env-sync --help
 ```
 
 Ou durante o desenvolvimento:
 ```bash
 npm run dev -- --help
+```
+
+### Desinstalação
+
+Para remover a ferramenta:
+```bash
+npm uninstall -g @fabioivan/env-sync
+```
+
+### 📦 Para Desenvolvimento e Publicação:
+```bash
+# Testa se está pronto para publicar
+npm run test:npm
+
+# Publica nova versão (com incremento automático)
+npm run publish
+
+# Comandos manuais alternativos:
+npm run version:patch    # Incrementa versão patch
+npm run version:minor    # Incrementa versão minor
+npm run version:major    # Incrementa versão major
+npm publish             # Publica versão atual
 ```
 
 ## 🔧 Solução de Problemas
