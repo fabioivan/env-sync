@@ -1,6 +1,5 @@
 import { DatabaseFileFinder } from "./file-finder"
 import { DockerManager } from "./docker-manager"
-import { InputHandler } from "./input-handler"
 
 /**
  * Interface para o resultado da atualização de portas
@@ -267,31 +266,28 @@ export class PortUpdater {
   }
 
   /**
-   * Gerencia o restart do Docker para o SynAuth se necessário.
+   * Gerencia o restart automático do Docker para o SynAuth se necessário.
+   * Executa o rebuild automaticamente quando detecta mudanças no SynAuth.
    */
-  async handleSynAuthDockerRestart(inputHandler: InputHandler): Promise<void> {
+  async handleSynAuthDockerRestart(): Promise<void> {
     if (!this.hasSynAuthUpdates()) {
       return
     }
 
-    const dockerManager = new DockerManager(inputHandler)
+    const dockerManager = new DockerManager()
 
     try {
-      // Pergunta ao usuário se quer fazer o restart
-      const shouldRestart = await dockerManager.askForSynAuthRestart()
+      // Informa sobre o restart e confirma automaticamente
+      dockerManager.askForSynAuthRestart()
 
-      if (shouldRestart) {
-        // Encontra o diretório do projeto SynAuth
-        const synAuthFile = this.synAuthUpdatedFiles[0]
-        const projectRoot = dockerManager.findSynAuthProjectRoot(synAuthFile)
+      // Encontra o diretório do projeto SynAuth
+      const synAuthFile = this.synAuthUpdatedFiles[0]
+      const projectRoot = dockerManager.findSynAuthProjectRoot(synAuthFile)
 
-        if (projectRoot) {
-          await dockerManager.rebuildSynAuthContainer(projectRoot)
-        } else {
-          console.log("❌ Não foi possível localizar o diretório raiz do projeto SynAuth.")
-        }
+      if (projectRoot) {
+        await dockerManager.rebuildSynAuthContainer(projectRoot)
       } else {
-        console.log("ℹ️  Restart do container SynAuth cancelado pelo usuário.")
+        console.log("❌ Não foi possível localizar o diretório raiz do projeto SynAuth.")
       }
     } catch (error) {
       console.error(`❌ Erro ao gerenciar Docker do SynAuth: ${error}`)

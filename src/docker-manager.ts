@@ -1,16 +1,10 @@
 import * as fs from "fs"
 import * as path from "path"
-import { InputHandler } from "./input-handler"
 
 /**
  * Gerencia operações Docker para projetos específicos.
  */
 export class DockerManager {
-  private inputHandler: InputHandler
-
-  constructor(inputHandler: InputHandler) {
-    this.inputHandler = inputHandler
-  }
 
   /**
    * Verifica se um arquivo é do projeto SynAuth.
@@ -64,16 +58,15 @@ export class DockerManager {
   }
 
   /**
-   * Pergunta ao usuário se deseja reiniciar o container do SynAuth.
+   * Informa sobre o restart do container do SynAuth e confirma automaticamente.
    */
-  async askForSynAuthRestart(): Promise<boolean> {
+  async askForSynAuthRestart() {
     console.log("\n🐳 DOCKER - Projeto SynAuth")
     console.log("=".repeat(40))
     console.log("A porta do projeto SynAuth foi alterada.")
     console.log("É necessário rebuild do container Docker para aplicar as mudanças.")
+    console.log("🔄 Executando rebuild automaticamente...")
     console.log()
-
-    return await this.inputHandler.confirm("Deseja fazer o rebuild do container SynAuth? (s/n): ")
   }
 
   /**
