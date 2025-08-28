@@ -1,21 +1,19 @@
 import { Command } from "commander"
-import { InputHandler } from "./input-handler"
 import { UIManager } from "./ui-manager"
 import { ConfigManager, Environment } from "./config-manager"
 import chalk from "chalk"
+import inquirer from "inquirer"
 
 /**
- * Gerencia comandos interativos usando Commander.
+ * Gerencia comandos interativos usando Commander e Inquirer.
  */
 export class CommandManager {
   private program: Command
-  private inputHandler: InputHandler
   private uiManager: UIManager
   private configManager: ConfigManager
 
-  constructor(inputHandler: InputHandler, uiManager: UIManager, configManager: ConfigManager) {
+  constructor(uiManager: UIManager, configManager: ConfigManager) {
     this.program = new Command()
-    this.inputHandler = inputHandler
     this.uiManager = uiManager
     this.configManager = configManager
     this.setupCommands()
@@ -27,15 +25,16 @@ export class CommandManager {
   private setupCommands(): void {
     this.program
       .name("env-sync")
-      .description("🔧 Gerenciador de Configurações de Ambientes - Sincronize portas de banco de dados")
+      .description(
+        "🔧 Gerenciador de Configurações de Ambientes - Sincronize portas de banco de dados",
+      )
       .version("1.0.0", "-v, --version", "Exibir versão")
       .helpOption("-h, --help", "Exibir ajuda")
 
     this.program
       .command("start")
       .description("Iniciar o gerenciador de ambientes")
-      .action(async () => {
-      })
+      .action(async () => {})
 
     this.program
       .command("list")
@@ -76,19 +75,24 @@ export class CommandManager {
   }
 
   /**
-   * Seleção interativa de ambiente com menu visual.
+   * Seleção interativa de ambiente com menu visual usando inquirer.
    */
   async selectEnvironmentInteractive(): Promise<Environment | null> {
     const environments = this.configManager.listEnvironments()
 
     if (environments.length === 0) {
-      this.uiManager.showWarning("Nenhum ambiente configurado encontrado!")
+      console.log(chalk.yellow("⚠️  Nenhum ambiente configurado encontrado!"))
 
-      const shouldAdd = await this.inputHandler.confirm(
-        chalk.yellow("Deseja adicionar um novo ambiente agora? (s/n): ")
-      )
+      const answer = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "shouldAdd",
+          message: "Deseja adicionar um novo ambiente agora?",
+          default: true,
+        },
+      ])
 
-      if (shouldAdd) {
+      if (answer.shouldAdd) {
         const added = await this.addEnvironmentInteractive()
         if (added) {
           return this.selectEnvironmentInteractive() // Recursivo para mostrar a nova lista
@@ -97,113 +101,164 @@ export class CommandManager {
       return null
     }
 
-    while (true) {
-      this.uiManager.addSpacing()
-      this.uiManager.showEnvironmentsList(environments)
+    // Cria choices para o inquirer
+    const choices = environments.map((env, index) => ({
+      name: `${env.name} - ${env.url}:${env.port}`,
+      value: index,
+      short: env.name,
+    }))
 
-      const choice = await this.inputHandler.selectOption(
-        chalk.cyan.bold("Selecione um ambiente (número): "),
-        environments.length,
-        true
-      )
+    // Adiciona opção para adicionar novo ambiente
+    choices.push({
+      name: chalk.green("➕ Adicionar novo ambiente"),
+      value: -1,
+      short: "Adicionar",
+    })
 
-      if (choice === null) {
-        this.uiManager.showWarning("Operação cancelada.")
-        return null
+    const answer = await inquirer.prompt([
+      {
+        type: "list",
+        name: "environmentIndex",
+        message: "Selecione um ambiente:",
+        choices,
+        pageSize: Math.min(choices.length, 10),
+      },
+    ])
+
+    if (answer.environmentIndex === -1) {
+      const added = await this.addEnvironmentInteractive()
+      if (added) {
+        return this.selectEnvironmentInteractive() // Recarrega a lista
       }
-
-      if (choice === 0) {
-        const added = await this.addEnvironmentInteractive()
-        if (added) {
-          return this.selectEnvironmentInteractive() // Recarrega a lista
-        }
-        continue
-      }
-
-      const selected = environments[choice - 1]
-      this.uiManager.showSelectedEnvironment(selected)
-
-      const confirm = await this.inputHandler.confirm(
-        chalk.green("Confirma a seleção deste ambiente? (s/n): ")
-      )
-
-      if (confirm) {
-        return selected
-      }
+      return null
     }
+
+    const selected = environments[answer.environmentIndex]
+
+    // Mostra ambiente selecionado
+    console.log(chalk.cyan("\n📋 Ambiente selecionado:"))
+    console.log(chalk.white(`   🌐 Nome: ${selected.name}`))
+    console.log(chalk.white(`   🔗 URL: ${selected.url}`))
+    console.log(chalk.white(`   🚪 Porta: ${selected.port}`))
+    console.log(chalk.white(`   👤 Usuário: ${selected.username}`))
+
+    const confirm = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirm",
+        message: "Confirma a seleção deste ambiente?",
+        default: true,
+      },
+    ])
+
+    if (confirm.confirm) {
+      return selected
+    }
+
+    // Se não confirmou, volta ao menu de seleção
+    return this.selectEnvironmentInteractive()
   }
 
   /**
-   * Adiciona ambiente de forma interativa.
+   * Adiciona ambiente de forma interativa usando inquirer.
    */
   async addEnvironmentInteractive(): Promise<boolean> {
-    this.uiManager.addSpacing()
-    this.uiManager.showAddEnvironmentForm()
+    console.log(chalk.cyan("\n🆕 Adicionar Novo Ambiente"))
+    console.log(chalk.gray("─".repeat(40)))
 
     try {
-      const name = await this.inputHandler.requiredInput(
-        chalk.cyan("📝 Nome do ambiente: "),
-        chalk.red("❌ O nome do ambiente é obrigatório!")
-      )
-
-      // Verifica se já existe
-      if (this.configManager.getEnvironment(name)) {
-        this.uiManager.showError(`Ambiente '${name}' já existe!`)
-        return false
-      }
-
-      const url = await this.inputHandler.requiredInput(
-        chalk.cyan("🌐 URL do ambiente: "),
-        chalk.red("❌ A URL do ambiente é obrigatória!")
-      )
-
-      const port = await this.inputHandler.requiredInput(
-        chalk.cyan("🔌 Porta do banco: "),
-        chalk.red("❌ A porta do banco é obrigatória!")
-      )
-
-      // Valida a porta
-      if (!this.isValidPort(port)) {
-        this.uiManager.showError("Porta inválida! Deve ser um número entre 1 e 65535.")
-        return false
-      }
-
-      const username = await this.inputHandler.requiredInput(
-        chalk.cyan("👤 Usuário do banco: "),
-        chalk.red("❌ O usuário do banco é obrigatório!")
-      )
-
-      const password = await this.inputHandler.requiredInput(
-        chalk.cyan("🔒 Senha do banco: "),
-        chalk.red("❌ A senha do banco é obrigatória!")
-      )
+      const answers = await inquirer.prompt([
+        {
+          type: "input",
+          name: "name",
+          message: "📝 Nome do ambiente:",
+          validate: (input: string) => {
+            if (!input.trim()) {
+              return "O nome do ambiente é obrigatório!"
+            }
+            if (this.configManager.getEnvironment(input.trim())) {
+              return `Ambiente '${input.trim()}' já existe!`
+            }
+            return true
+          },
+        },
+        {
+          type: "input",
+          name: "url",
+          message: "🌐 URL do ambiente:",
+          validate: (input: string) => {
+            return input.trim() ? true : "A URL do ambiente é obrigatória!"
+          },
+        },
+        {
+          type: "input",
+          name: "port",
+          message: "🔌 Porta do banco:",
+          validate: (input: string) => {
+            if (!input.trim()) {
+              return "A porta do banco é obrigatória!"
+            }
+            if (!this.isValidPort(input.trim())) {
+              return "Porta inválida! Deve ser um número entre 1 e 65535."
+            }
+            return true
+          },
+        },
+        {
+          type: "input",
+          name: "username",
+          message: "👤 Usuário do banco:",
+          validate: (input: string) => {
+            return input.trim() ? true : "O usuário do banco é obrigatório!"
+          },
+        },
+        {
+          type: "password",
+          name: "password",
+          message: "🔒 Senha do banco:",
+          validate: (input: string) => {
+            return input.trim() ? true : "A senha do banco é obrigatória!"
+          },
+        },
+      ])
 
       // Mostra preview do ambiente
       console.log(chalk.yellow.bold("\n📋 Preview do novo ambiente:"))
       console.log(chalk.gray("─".repeat(40)))
-      console.log(chalk.white("Nome: ") + chalk.cyan(name))
-      console.log(chalk.white("URL: ") + chalk.blue(url))
-      console.log(chalk.white("Porta: ") + chalk.yellow(port))
-      console.log(chalk.white("Usuário: ") + chalk.magenta(username))
-      console.log(chalk.white("Senha: ") + chalk.gray("*".repeat(password.length)))
+      console.log(chalk.white("Nome: ") + chalk.cyan(answers.name))
+      console.log(chalk.white("URL: ") + chalk.blue(answers.url))
+      console.log(chalk.white("Porta: ") + chalk.yellow(answers.port))
+      console.log(chalk.white("Usuário: ") + chalk.magenta(answers.username))
+      console.log(chalk.white("Senha: ") + chalk.gray("*".repeat(answers.password.length)))
 
-      const shouldSave = await this.inputHandler.confirm(
-        chalk.green("\nDeseja salvar este ambiente? (s/n): ")
-      )
+      const confirmation = await inquirer.prompt([
+        {
+          type: "confirm",
+          name: "shouldSave",
+          message: "Deseja salvar este ambiente?",
+          default: true,
+        },
+      ])
 
-      if (!shouldSave) {
-        this.uiManager.showWarning("Adição de ambiente cancelada.")
+      if (!confirmation.shouldSave) {
+        console.log(chalk.yellow("⚠️  Adição de ambiente cancelada."))
         return false
       }
 
-      const success = this.configManager.addEnvironment(name, url, port, username, password)
+      const success = this.configManager.addEnvironment(
+        answers.name.trim(),
+        answers.url.trim(),
+        answers.port.trim(),
+        answers.username.trim(),
+        answers.password.trim(),
+      )
+
       if (success) {
-        this.uiManager.showSuccess(`Ambiente '${name}' adicionado com sucesso!`)
+        console.log(chalk.green(`✅ Ambiente '${answers.name}' adicionado com sucesso!`))
       }
       return success
-
     } catch (error) {
-      this.uiManager.showError("Adição de ambiente cancelada.")
+      console.log(chalk.yellow("⚠️  Adição de ambiente cancelada."))
       return false
     }
   }
@@ -240,16 +295,23 @@ export class CommandManager {
   }
 
   /**
-   * Exibe menu de confirmação estilizado.
+   * Exibe menu de confirmação estilizado usando inquirer.
    */
   async showConfirmationMenu(message: string): Promise<boolean> {
-    this.uiManager.showConfirmation()
+    console.log(chalk.yellow("\n⚠️  Confirmação necessária"))
+    console.log(chalk.gray("─".repeat(50)))
     console.log(chalk.white(message))
-    console.log()
 
-    return await this.inputHandler.confirm(
-      chalk.yellow.bold("Confirma a operação? (s/n): ")
-    )
+    const answer = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirm",
+        message: "Confirma a operação?",
+        default: false,
+      },
+    ])
+
+    return answer.confirm
   }
 
   /**

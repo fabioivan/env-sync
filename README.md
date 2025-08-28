@@ -1,14 +1,30 @@
 # 🔧 Env-Sync - Gerenciador de Configurações de Banco de Dados
 
-Uma ferramenta Node.js/TypeScript para gerenciar portas de banco de dados em múltiplos projetos C# e React, permitindo trocar rapidamente entre diferentes ambientes de desenvolvimento.
+Uma ferramenta Node.js/TypeScript completa para gerenciar configurações de banco de dados em múltiplos projetos C# e React. Permite trocar rapidamente entre ambientes e gerar SynData para sistemas React.
 
 ## 📋 Funcionalidades
 
+### 🔄 **Trocar Ambiente** (Gerenciamento de Portas)
 - **Gerenciamento de Ambientes**: Salve múltiplos ambientes (desenvolvimento, teste, produção)
 - **Busca Automática**: Encontra todos os arquivos `databasesettings.json` na sua pasta home
 - **Atualização Inteligente**: Identifica e atualiza connection strings automaticamente
 - **Prévia de Mudanças**: Mostra exatamente o que será alterado antes da execução
-- **Interface Amigável**: Interface de linha de comando simples e intuitiva
+- **Filtragem Inteligente**: Ignora arquivos de teste e configurações MySQL sem porta
+- **Integração Docker**: Rebuild automático do container SynAuth quando necessário
+
+### 🔧 **Criar SynData** (Nova Funcionalidade)
+- **Conexão com Banco**: Conecta automaticamente ao PostgreSQL usando o ambiente selecionado
+- **Busca de Bases Hemp**: Localiza bases que começam com `hemp` (exceto `vdi` e `paygw`)
+- **Informações do Cliente**: Busca o nome do cliente na tabela `companies`
+- **Geração de SynData**: Criptografa dados usando **100% compatibilidade com sistema C#**
+- **Atualização de .env**: Atualiza arquivos `.env.development` na pasta `projects`
+- **Último Ambiente**: Lembra do último ambiente usado para agilizar o processo
+- **Criptografia Compatível**: Usa mesma classe `CryptValues` do sistema original
+
+### 🎯 **Interface CLI Unificada**
+- **Menu Intuitivo**: Interface amigável com seleção de operações
+- **Fluxo Guiado**: Processo passo-a-passo para cada funcionalidade
+- **Feedback Visual**: Indicadores de progresso e confirmações
 
 ## 🚀 Instalação
 
@@ -51,7 +67,7 @@ env-sync --help
 
 ## 📖 Como Usar
 
-### Primeira Execução
+### Execução Principal
 
 Execute o programa (instalação global):
 ```bash
@@ -62,6 +78,20 @@ Ou durante desenvolvimento:
 ```bash
 npm run dev
 ```
+
+O programa exibirá um menu com duas opções:
+
+#### 🔄 **Trocar Ambiente**
+- Altera a porta do banco de dados em todos os arquivos `databasesettings.json`
+- Mostra preview das mudanças antes de aplicar
+- Oferece rebuild automático do Docker para projetos SynAuth
+
+#### 🔧 **Criar SynData** 
+- Conecta no banco do ambiente selecionado
+- Lista bases que começam com `hemp`
+- Permite selecionar uma base específica
+- Gera SynData criptografado compatível com C#
+- Atualiza todos os arquivos `.env.development` com `REACT_APP_SYNDATA`
 
 ### Comandos Disponíveis
 
@@ -194,8 +224,30 @@ Processando: /home/user/projects/MyApp/databasesettings.json
    - /home/user/projects/OtherApp/config/databasesettings.json
 
 ✅ Operação concluída com sucesso!
-   2 arquivo(s) atualizado(s)
+  2 arquivo(s) atualizado(s)
 ```
+
+## 🔐 Compatibilidade da Criptografia
+
+A funcionalidade **"Criar SynData"** utiliza **100% compatibilidade** com o sistema C# original:
+
+### ✅ **Características Garantidas:**
+- **Mesmo algoritmo de criptografia** do sistema C#
+- **Mesmos valores de salt e secret** 
+- **Formato idêntico** dos dados criptografados
+- **Interoperabilidade total** entre sistemas
+
+### 🔧 **Classe CryptValues Convertida:**
+```typescript
+// Valores exatos do sistema C# original
+private _salt = "0UgQLJiESKyELbVqsgrLJsFXSIF";
+private _secret = "parangaricutirimirruaro";
+
+// Algoritmo: Base64(Base64(MD5(salt)):Base64(Base64(input)):Base64(MD5(secret)))
+```
+
+### 📋 **Para Mais Detalhes:**
+Consulte o arquivo [`CRYPTO_COMPATIBILITY.md`](./CRYPTO_COMPATIBILITY.md) para documentação técnica completa sobre a implementação da criptografia.
 
 ## 🆘 Ajuda
 
