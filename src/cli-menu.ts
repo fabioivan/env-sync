@@ -1,6 +1,7 @@
 import inquirer from "inquirer"
 import chalk from "chalk"
 import { UIManager } from "./ui-manager"
+import { UserInfo } from "./database-manager"
 
 export interface MenuChoice {
   name: string
@@ -204,6 +205,130 @@ export class CLIMenu {
     }
 
     console.log("")
+  }
+
+
+
+  /**
+   * Exibe menu para pesquisar usuários
+   */
+  async showUserSearchMenu(): Promise<{ action: "list" | "search" | "cancel"; searchTerm?: string }> {
+    console.log(chalk.cyan("\n👤 Selecionar usuário:"))
+    console.log(chalk.gray("─".repeat(50)))
+
+    const answer = await inquirer.prompt([
+      {
+        type: "list",
+        name: "action",
+        message: "Como deseja encontrar o usuário?",
+        choices: [
+          {
+            name: "📋 Listar todos os usuários da base",
+            value: "list",
+            short: "Listar todos",
+          },
+          {
+            name: "🔍 Pesquisar por login específico",
+            value: "search",
+            short: "Pesquisar",
+          },
+          {
+            name: "❌ Cancelar operação",
+            value: "cancel",
+            short: "Cancelar",
+          },
+        ],
+      },
+    ])
+
+    if (answer.action === "search") {
+      const searchAnswer = await inquirer.prompt([
+        {
+          type: "input",
+          name: "searchTerm",
+          message: "Digite parte do login do usuário:",
+          validate: (input: string) => {
+            if (!input.trim()) {
+              return "Por favor, digite um termo de busca!"
+            }
+            return true
+          },
+        },
+      ])
+
+      return { action: answer.action, searchTerm: searchAnswer.searchTerm }
+    }
+
+    return { action: answer.action }
+  }
+
+  /**
+   * Exibe menu de seleção de usuários
+   */
+  async showUserSelectionMenu(users: UserInfo[]): Promise<UserInfo | "cancel" | "new_search" | null> {
+    if (users.length === 0) {
+      console.log(chalk.yellow("⚠️  Nenhum usuário encontrado"))
+      return null
+    }
+
+    console.log(chalk.cyan(`\n👥 Usuários encontrados (${users.length}):`))
+    console.log(chalk.gray("─".repeat(70)))
+
+    const userChoices = users.map((user) => ({
+      name: `${chalk.yellow(user.login)} - ${chalk.white(user.name)}`,
+      value: user,
+      short: user.login,
+    }))
+
+    // Adiciona opções de navegação com tipo union
+    const actionChoices = [
+      {
+        name: chalk.gray("🔍 Nova pesquisa"),
+        value: "new_search" as const,
+        short: "Nova pesquisa",
+      },
+      {
+        name: chalk.gray("❌ Cancelar"),
+        value: "cancel" as const,
+        short: "Cancelar",
+      },
+    ]
+
+    const allChoices = [...userChoices, ...actionChoices]
+
+    const answer = await inquirer.prompt([
+      {
+        type: "list",
+        name: "user",
+        message: "Selecione o usuário:",
+        choices: allChoices,
+        pageSize: Math.min(allChoices.length, 15),
+      },
+    ])
+
+    return answer.user
+  }
+
+  /**
+   * Exibe confirmação de seleção de usuário
+   */
+  async confirmUserSelection(user: UserInfo): Promise<boolean> {
+    console.log(chalk.cyan("\n✅ Usuário selecionado:"))
+    console.log(chalk.gray("─".repeat(50)))
+    console.log(chalk.white(`👤 Nome: ${user.name}`))
+    console.log(chalk.white(`🔑 Login: ${user.login}`))
+    console.log(chalk.white(`🆔 ID: ${user.id}`))
+
+    const answer = await inquirer.prompt([
+      {
+        type: "confirm",
+        name: "confirm",
+        message: "Confirma a seleção deste usuário?",
+        default: true,
+      },
+    ])
+
+    return answer.confirm
   }
 
   /**

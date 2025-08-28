@@ -14,6 +14,13 @@ export interface DatabaseInfo {
   clientName: string
 }
 
+export interface UserInfo {
+  id: string
+  login: string
+  name: string
+  password: string
+}
+
 export class DatabaseManager {
   private config: DatabaseConfig
 
@@ -128,6 +135,91 @@ export class DatabaseManager {
     } catch (error) {
       await client.end()
       return false
+    }
+  }
+
+  /**
+   * Busca usuários ativos e não deletados de uma base específica
+   */
+  async getActiveUsers(databaseName: string): Promise<UserInfo[]> {
+    const client = new Client({
+      host: this.config.host,
+      port: this.config.port,
+      user: this.config.user,
+      password: this.config.password,
+      database: databaseName,
+    })
+
+    try {
+      await client.connect()
+
+      const usersQuery = `
+        SELECT
+          u.id,
+          u.login,
+          u.name,
+          u.password
+        FROM users u
+        WHERE u.active = true
+        AND u.deleted = false
+        ORDER BY u.id;
+      `
+
+      const result = await client.query(usersQuery)
+      await client.end()
+
+      return result.rows.map(row => ({
+        id: row.id,
+        login: row.login,
+        name: row.name,
+        password: row.password,
+      }))
+    } catch (error) {
+      await client.end()
+      throw new Error(`Erro ao buscar usuários da base ${databaseName}: ${error}`)
+    }
+  }
+
+  /**
+   * Busca usuários por login (busca parcial)
+   */
+  async searchUsersByLogin(databaseName: string, searchTerm: string): Promise<UserInfo[]> {
+    const client = new Client({
+      host: this.config.host,
+      port: this.config.port,
+      user: this.config.user,
+      password: this.config.password,
+      database: databaseName,
+    })
+
+    try {
+      await client.connect()
+
+      const searchQuery = `
+        SELECT
+          u.id,
+          u.login,
+          u.name,
+          u.password
+        FROM users u
+        WHERE u.active = true
+        AND u.deleted = false
+        AND LOWER(u.login) ILIKE LOWER($1)
+        ORDER BY u.id;
+      `
+
+      const result = await client.query(searchQuery, [`%${searchTerm}%`])
+      await client.end()
+
+      return result.rows.map(row => ({
+        id: row.id,
+        login: row.login,
+        name: row.name,
+        password: row.password,
+      }))
+    } catch (error) {
+      await client.end()
+      throw new Error(`Erro ao buscar usuários por login na base ${databaseName}: ${error}`)
     }
   }
 }

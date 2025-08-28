@@ -8,6 +8,11 @@ export interface EnvFileInfo {
   newValue: string
 }
 
+export interface UserCredentials {
+  username: string
+  password: string
+}
+
 export interface EnvUpdateResult {
   updatedFiles: string[]
   failedFiles: string[]
@@ -125,6 +130,35 @@ export class EnvFileManager {
   }
 
   /**
+   * Lê as credenciais do usuário do arquivo
+   */
+  getCurrentUserCredentials(filePath: string): UserCredentials | null {
+    try {
+      const content = fs.readFileSync(filePath, "utf8")
+      const lines = content.split("\n")
+      let username: string | null = null
+      let password: string | null = null
+
+      for (const line of lines) {
+        const trimmedLine = line.trim()
+        if (trimmedLine.startsWith("REACT_APP_USERNAME=")) {
+          username = trimmedLine.substring("REACT_APP_USERNAME=".length)
+        } else if (trimmedLine.startsWith("REACT_APP_PASSWORD=")) {
+          password = trimmedLine.substring("REACT_APP_PASSWORD=".length)
+        }
+      }
+
+      if (username !== null && password !== null) {
+        return { username, password }
+      }
+
+      return null
+    } catch (error) {
+      return null
+    }
+  }
+
+  /**
    * Gera preview das mudanças que serão feitas
    * Considera apenas arquivos que já contêm a variável REACT_APP_SYNDATA
    */
@@ -187,6 +221,90 @@ export class EnvFileManager {
       updatedFiles,
       failedFiles,
       previewData,
+    }
+  }
+
+  /**
+   * Atualiza as credenciais do usuário em todos os arquivos .env.development
+   */
+  updateUserCredentialsInAllFiles(credentials: UserCredentials): EnvUpdateResult {
+    const envFiles = this.findEnvDevelopmentFiles()
+    const updatedFiles: string[] = []
+    const failedFiles: string[] = []
+    const previewData: EnvFileInfo[] = []
+
+    for (const filePath of envFiles) {
+      try {
+        const currentCredentials = this.getCurrentUserCredentials(filePath)
+
+        // Só processa arquivos que já contêm as variáveis de credenciais
+        if (currentCredentials !== null) {
+          previewData.push({
+            filePath,
+            currentValue: `${currentCredentials.username}/${currentCredentials.password}`,
+            newValue: `${credentials.username}/${credentials.password}`,
+          })
+
+          if (this.updateUserCredentialsInFile(filePath, credentials)) {
+            updatedFiles.push(filePath)
+          } else {
+            failedFiles.push(filePath)
+          }
+        }
+      } catch (error) {
+        failedFiles.push(filePath)
+        console.error(chalk.red(`\n❌ Erro ao processar credenciais em ${filePath}: ${error}`))
+      }
+    }
+
+    return {
+      updatedFiles,
+      failedFiles,
+      previewData,
+    }
+  }
+
+  /**
+   * Atualiza as credenciais do usuário em um arquivo específico
+   */
+  private updateUserCredentialsInFile(filePath: string, credentials: UserCredentials): boolean {
+    try {
+      const content = fs.readFileSync(filePath, "utf8")
+      const lines = content.split("\n")
+      let updated = false
+      let usernameFound = false
+      let passwordFound = false
+
+      // Procura pelas linhas existentes e atualiza
+      for (let i = 0; i < lines.length; i++) {
+        const trimmedLine = lines[i].trim()
+        if (trimmedLine.startsWith("REACT_APP_USERNAME=")) {
+          lines[i] = `REACT_APP_USERNAME=${credentials.username}`
+          updated = true
+          usernameFound = true
+        } else if (trimmedLine.startsWith("REACT_APP_PASSWORD=")) {
+          lines[i] = `REACT_APP_PASSWORD=${credentials.password}`
+          updated = true
+          passwordFound = true
+        }
+      }
+
+      // Se as variáveis não existem, não faz nada
+      if (!usernameFound || !passwordFound) {
+        console.log(chalk.yellow(`\n⚠️  Variáveis de credenciais não encontradas em ${filePath}, pulando arquivo`))
+        return false
+      }
+
+      // Salva o arquivo apenas se houve mudança
+      if (updated) {
+        fs.writeFileSync(filePath, lines.join("\n"), "utf8")
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.error(chalk.red(`\n❌ Erro ao atualizar credenciais em ${filePath}: ${error}`))
+      return false
     }
   }
 

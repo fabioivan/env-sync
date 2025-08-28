@@ -1,8 +1,9 @@
 import chalk from "chalk"
-import { DatabaseManager, DatabaseInfo } from "./database-manager"
+import { DatabaseManager, DatabaseInfo, UserInfo } from "./database-manager"
 import { SynData } from "./syndata"
-import { EnvFileManager, EnvUpdateResult } from "./env-file-manager"
+import { EnvFileManager, EnvUpdateResult, UserCredentials } from "./env-file-manager"
 import { Environment } from "./config-manager"
+import { CLIMenu } from "./cli-menu"
 
 export interface SynDataOperationResult {
   success: boolean
@@ -14,6 +15,7 @@ export interface SynDataOperationResult {
 export class SynDataManager {
   private databaseManager: DatabaseManager
   private envFileManager: EnvFileManager
+  private cliMenu: CLIMenu
 
   constructor(environment: Environment) {
     this.databaseManager = new DatabaseManager({
@@ -23,6 +25,7 @@ export class SynDataManager {
       password: environment.password,
     })
     this.envFileManager = new EnvFileManager()
+    this.cliMenu = new CLIMenu()
   }
 
   /**
@@ -107,7 +110,7 @@ export class SynDataManager {
 
       if (result.updatedFiles.length > 0) {
         console.log(
-          chalk.green(`\n✅ ${result.updatedFiles.length} arquivo(s) atualizado(s) com sucesso`),
+          chalk.green(`✅ ${result.updatedFiles.length} arquivo(s) atualizado(s) com sucesso`),
         )
       }
 
@@ -125,30 +128,74 @@ export class SynDataManager {
   }
 
   /**
-   * Executa todo o fluxo de criação de SynData
+   * Permite ao usuário selecionar um usuário específico da base
    */
-  async createSynData(
-    environment: Environment,
-    selectedDatabase: string,
-  ): Promise<SynDataOperationResult> {
+  async selectUserFromDatabase(databaseName: string): Promise<UserInfo | null> {
     try {
-      // 1. Gera o SynData
-      const synData = this.generateSynData(environment, selectedDatabase)
+      while (true) {
+        // 1. Pergunta como buscar o usuário
+        const searchOptions = await this.cliMenu.showUserSearchMenu()
 
-      // 2. Atualiza os arquivos .env.development
-      const envUpdateResult = this.updateEnvFiles(synData)
+        if (searchOptions.action === "cancel") {
+          return null
+        }
 
-      return {
-        success: true,
-        message: "SynData criado e arquivos atualizados com sucesso",
-        synData,
-        envUpdateResult,
+        let users: UserInfo[] = []
+
+        // 2. Busca usuários baseado na opção escolhida
+        if (searchOptions.action === "list") {
+          console.log(chalk.cyan("\n🔍 Carregando todos os usuários da base..."))
+          users = await this.databaseManager.getActiveUsers(databaseName)
+        } else if (searchOptions.action === "search" && searchOptions.searchTerm) {
+          console.log(chalk.cyan(`\n🔍 Procurando usuários com login contendo "${searchOptions.searchTerm}"...`))
+          users = await this.databaseManager.searchUsersByLogin(databaseName, searchOptions.searchTerm)
+        }
+
+        // 3. Exibe menu de seleção
+        const selectedUser = await this.cliMenu.showUserSelectionMenu(users)
+
+        if (selectedUser === "cancel") {
+          return null
+        } else if (selectedUser === "new_search") {
+          continue // Volta para o início do loop
+        } else if (selectedUser) {
+          // 4. Confirma a seleção
+          const confirmed = await this.cliMenu.confirmUserSelection(selectedUser)
+          if (confirmed) {
+            return selectedUser
+          }
+          // Se não confirmou, volta para o início do loop
+        }
       }
     } catch (error) {
-      return {
-        success: false,
-        message: `Erro ao criar SynData: ${error}`,
+      console.error(chalk.red(`❌ Erro ao selecionar usuário: ${error}`))
+      return null
+    }
+  }
+
+  /**
+   * Atualiza as credenciais do usuário nos arquivos .env.development
+   */
+  updateUserCredentials(credentials: UserCredentials): EnvUpdateResult {
+    try {
+      console.log(chalk.cyan("\n🔐 Atualizando credenciais nos arquivos .env.development..."))
+
+      const result = this.envFileManager.updateUserCredentialsInAllFiles(credentials)
+
+      if (result.updatedFiles.length > 0) {
+        console.log(
+          chalk.green(`\n✅ ${result.updatedFiles.length} arquivo(s) atualizado(s) com credenciais`),
+        )
       }
+
+      if (result.failedFiles.length > 0) {
+        console.log(chalk.red(`\n❌ ${result.failedFiles.length} arquivo(s) falharam na atualização de credenciais`))
+      }
+
+      return result
+    } catch (error) {
+      console.error(chalk.red(`\n❌ Erro ao atualizar credenciais: ${error}`))
+      throw error
     }
   }
 

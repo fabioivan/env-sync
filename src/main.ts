@@ -138,36 +138,58 @@ export class EnvSyncApp {
       // 5. Usuário seleciona a base
       const selectedDatabase = await this.cliMenu.showDatabaseMenu(databases)
 
-      // 6. Gera preview do SynData
+      // 6. Seleciona usuário da base de dados
+      const selectedUser = await synDataManager.selectUserFromDatabase(selectedDatabase)
+      if (!selectedUser) {
+        this.uiManager.showWarning("Operação cancelada: nenhum usuário selecionado.")
+        return
+      }
+
+      // 7. Gera preview do SynData
       const synData = synDataManager.generateSynData(environment, selectedDatabase)
       const previewData = synDataManager.generateEnvPreview(synData)
 
-      // 7. Confirma as mudanças
+      // 8. Confirma as mudanças
       const shouldUpdate = await this.cliMenu.confirmFileUpdate(previewData)
       if (!shouldUpdate) {
         this.uiManager.showWarning("Operação cancelada.")
         return
       }
 
-      // 8. Executa a atualização
+      // 9. Executa a atualização do SynData
       const updateSpinner = this.uiManager.showProgress("Atualizando arquivos .env.development...")
       const result = synDataManager.updateEnvFiles(synData)
       updateSpinner.succeed("Arquivos atualizados!")
 
-      // 9. Exibe resumo
-      const details = [
-        `${result.updatedFiles.length} arquivo(s) atualizado(s)`,
-        `Database: ${selectedDatabase}`,
-        `Host: ${environment.url}:${environment.port}`,
-      ]
+      // 10. Atualiza credenciais do usuário selecionado
+      const credentialsSpinner = this.uiManager.showProgress("Atualizando credenciais do usuário...")
+      const credentialsResult = synDataManager.updateUserCredentials({
+        username: selectedUser.login,
+        password: selectedUser.password,
+      })
+      credentialsSpinner.succeed("Credenciais atualizadas!")
 
-      if (result.failedFiles.length > 0) {
-        details.push(`${result.failedFiles.length} arquivo(s) falharam`)
+      if (credentialsResult.failedFiles.length > 0) {
+        this.uiManager.showWarning(`${credentialsResult.failedFiles.length} arquivo(s) falharam na atualização de credenciais`)
       }
 
-      this.cliMenu.showSuccess("SynData criado com sucesso!", details)
+      // 11. Exibe resumo
+      const details = [
+        `${result.updatedFiles.length} arquivo(s) atualizado(s) com SynData`,
+        `${credentialsResult.updatedFiles.length} arquivo(s) atualizado(s) com credenciais`,
+        `Database: ${selectedDatabase}`,
+        `Host: ${environment.url}:${environment.port}`,
+        `Usuário: ${selectedUser.login}`,
+      ]
 
-      // 10. Salva como último ambiente usado
+      if (result.failedFiles.length > 0 || credentialsResult.failedFiles.length > 0) {
+        const totalFailed = result.failedFiles.length + credentialsResult.failedFiles.length
+        details.push(`${totalFailed} arquivo(s) falharam`)
+      }
+
+      this.cliMenu.showSuccess("SynData e credenciais criados com sucesso!", details)
+
+      // 12. Salva como último ambiente usado
       this.lastEnvManager.saveLastEnvironment(environment)
     } catch (error) {
       this.cliMenu.showError("Erro ao criar SynData", error as Error)
