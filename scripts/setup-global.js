@@ -4,7 +4,7 @@ const { execSync } = require('child_process');
 const chalk = require('chalk');
 const path = require('path');
 
-console.log(chalk.blue.bold('🔧 ENV-SYNC - Setup Global'));
+console.log(chalk.blue.bold('🔧 ENV-UPDATER - Setup Global'));
 console.log(chalk.blue('=' .repeat(50)));
 
 try {
@@ -19,8 +19,8 @@ try {
 
   console.log(chalk.green('\n✅ Setup concluído com sucesso!'));
   console.log(chalk.cyan('\n🚀 Agora você pode usar:'));
-  console.log(chalk.white('   env-sync --help'));
-  console.log(chalk.white('   env-sync (para executar a ferramenta)'));
+  console.log(chalk.white('   env-updater --help'));
+  console.log(chalk.white('   env-updater (para executar a ferramenta)'));
 
   console.log(chalk.yellow('\n📋 Para remover o link global:'));
   console.log(chalk.white('   npm run unlink:global'));

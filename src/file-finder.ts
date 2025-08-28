@@ -1,6 +1,6 @@
-import * as fs from "fs"
-import * as path from "path"
-import * as os from "os"
+import * as fs from "node:fs"
+import * as path from "node:path"
+import * as os from "node:os"
 
 /**
  * Encontra e manipula arquivos databasesettings.json na pasta home do usuário.
@@ -34,24 +34,19 @@ export class DatabaseFileFinder {
         const fullPath = path.join(dirPath, item.name)
 
         if (item.isDirectory()) {
-          // Ignora diretórios que geralmente não contêm projetos
           if (this.shouldSkipDirectory(item.name)) {
             continue
           }
           this.searchRecursively(fullPath, foundFiles)
         } else if (item.isFile() && item.name.toLowerCase() === "databasesettings.json") {
-          // Verifica se o arquivo deve ser ignorado (MySQL ou sem porta)
           if (this.shouldIgnoreFile(fullPath)) {
-            const reason = this.getIgnoreReason(fullPath)
-            console.log(`Ignorado (${reason}): ${fullPath}`)
+            this.getIgnoreReason(fullPath)
           } else {
             foundFiles.push(fullPath)
-            console.log(`Encontrado: ${fullPath}`)
           }
         }
       }
     } catch (error) {
-      // Ignora erros de permissão e continua a busca
       if (
         (error as NodeJS.ErrnoException).code !== "EACCES" &&
         (error as NodeJS.ErrnoException).code !== "EPERM"
@@ -85,17 +80,14 @@ export class DatabaseFileFinder {
       "build",
     ]
 
-    // Ignora diretórios que começam com ponto
     if (dirName.startsWith(".")) {
       return true
     }
 
-    // Ignora diretórios da lista skipDirs
     if (skipDirs.includes(dirName)) {
       return true
     }
 
-    // Ignora diretórios que contenham "test" no nome (case-insensitive)
     if (dirName.toLowerCase().includes("test")) {
       return true
     }
@@ -121,13 +113,6 @@ export class DatabaseFileFinder {
    */
   writeDatabaseSettings(filePath: string, content: Record<string, any>): boolean {
     try {
-      // Faz backup do arquivo original
-      // const backupPath = `${filePath}.backup`
-      // if (fs.existsSync(filePath)) {
-      //   fs.copyFileSync(filePath, backupPath)
-      //   console.log(`Backup criado: ${backupPath}`)
-      // }
-
       const jsonContent = JSON.stringify(content, null, 4)
       fs.writeFileSync(filePath, jsonContent, "utf-8")
       return true
@@ -263,7 +248,6 @@ export class DatabaseFileFinder {
     let current: any = content
 
     try {
-      // Navega até o objeto pai
       for (let i = 0; i < keys.length - 1; i++) {
         const key = keys[i]
 
@@ -276,7 +260,6 @@ export class DatabaseFileFinder {
         }
       }
 
-      // Define o valor na chave final
       const finalKey = keys[keys.length - 1]
       if (finalKey.includes("[") && finalKey.includes("]")) {
         const arrayKey = finalKey.split("[")[0]
@@ -306,12 +289,10 @@ export class DatabaseFileFinder {
       const providers = this.findProviders(content)
       const connectionStrings = this.findConnectionStrings(content)
 
-      // 1. Se tem Provider MySQL, sempre ignora
       if (providers.some((provider) => provider.toLowerCase() === "mysql")) {
         return true
       }
 
-      // 2. Se não tem porta em nenhuma connection string, ignora (qualquer provider)
       const hasPortInAnyConnection = connectionStrings.some((keyPath) => {
         const connectionString = this.getValueByKeyPath(content, keyPath)
         if (typeof connectionString === "string") {
@@ -322,7 +303,6 @@ export class DatabaseFileFinder {
 
       return !hasPortInAnyConnection
     } catch (error) {
-      // Em caso de erro, não ignora o arquivo
       return false
     }
   }
@@ -340,12 +320,10 @@ export class DatabaseFileFinder {
       const providers = this.findProviders(content)
       const connectionStrings = this.findConnectionStrings(content)
 
-      // Verifica se é MySQL
       if (providers.some((provider) => provider.toLowerCase() === "mysql")) {
         return "Provider MySQL"
       }
 
-      // Verifica se não tem porta
       const hasPortInAnyConnection = connectionStrings.some((keyPath) => {
         const connectionString = this.getValueByKeyPath(content, keyPath)
         if (typeof connectionString === "string") {

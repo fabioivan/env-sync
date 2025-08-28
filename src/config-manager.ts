@@ -1,6 +1,6 @@
-import * as fs from "fs"
-import * as path from "path"
-import * as os from "os"
+import * as fs from "node:fs"
+import * as path from "node:path"
+import * as os from "node:os"
 
 /**
  * Interface para definir um ambiente de configuração
@@ -28,7 +28,7 @@ export class ConfigManager {
   private readonly configFile: string
 
   constructor() {
-    this.configDir = path.join(os.homedir(), ".env-sync")
+    this.configDir = path.join(os.homedir(), ".env-updater")
     this.configFile = path.join(this.configDir, "environments.json")
     this.ensureConfigDir()
   }
@@ -83,7 +83,6 @@ export class ConfigManager {
   ): boolean {
     const config = this.loadEnvironments()
 
-    // Verifica se o ambiente já existe
     const existingEnv = config.environments.find((env) => env.name === name)
     if (existingEnv) {
       console.log(`Ambiente '${name}' já existe!`)

@@ -35,7 +35,6 @@ export class SynDataManager {
     try {
       console.log(chalk.cyan("\n🔍 Buscando bases de dados disponíveis...\n"))
 
-      // Testa a conexão primeiro
       const connectionTest = await this.databaseManager.testConnection()
       if (!connectionTest) {
         throw new Error(
@@ -133,7 +132,6 @@ export class SynDataManager {
   async selectUserFromDatabase(databaseName: string): Promise<UserInfo | null> {
     try {
       while (true) {
-        // 1. Pergunta como buscar o usuário
         const searchOptions = await this.cliMenu.showUserSearchMenu()
 
         if (searchOptions.action === "cancel") {
@@ -142,7 +140,6 @@ export class SynDataManager {
 
         let users: UserInfo[] = []
 
-        // 2. Busca usuários baseado na opção escolhida
         if (searchOptions.action === "list") {
           console.log(chalk.cyan("\n🔍 Carregando todos os usuários da base..."))
           users = await this.databaseManager.getActiveUsers(databaseName)
@@ -151,20 +148,17 @@ export class SynDataManager {
           users = await this.databaseManager.searchUsersByLogin(databaseName, searchOptions.searchTerm)
         }
 
-        // 3. Exibe menu de seleção
         const selectedUser = await this.cliMenu.showUserSelectionMenu(users)
 
         if (selectedUser === "cancel") {
           return null
         } else if (selectedUser === "new_search") {
-          continue // Volta para o início do loop
+          continue
         } else if (selectedUser) {
-          // 4. Confirma a seleção
           const confirmed = await this.cliMenu.confirmUserSelection(selectedUser)
           if (confirmed) {
             return selectedUser
           }
-          // Se não confirmou, volta para o início do loop
         }
       }
     } catch (error) {
@@ -203,7 +197,6 @@ export class SynDataManager {
    * Valida se as condições necessárias estão atendidas
    */
   validatePrerequisites(): { valid: boolean; message: string } {
-    // Verifica se a pasta projects existe
     if (!this.envFileManager.validateProjectsPath()) {
       return {
         valid: false,

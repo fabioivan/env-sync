@@ -24,7 +24,7 @@ export class CommandManager {
    */
   private setupCommands(): void {
     this.program
-      .name("env-sync")
+      .name("env-updater")
       .description(
         "🔧 Gerenciador de Configurações de Ambientes - Sincronize portas de banco de dados",
       )
@@ -95,20 +95,18 @@ export class CommandManager {
       if (answer.shouldAdd) {
         const added = await this.addEnvironmentInteractive()
         if (added) {
-          return this.selectEnvironmentInteractive() // Recursivo para mostrar a nova lista
+          return this.selectEnvironmentInteractive()
         }
       }
       return null
     }
 
-    // Cria choices para o inquirer
     const choices = environments.map((env, index) => ({
       name: `${env.name} - ${env.url}:${env.port}`,
       value: index,
       short: env.name,
     }))
 
-    // Adiciona opção para adicionar novo ambiente
     choices.push({
       name: chalk.green("➕ Adicionar novo ambiente"),
       value: -1,
@@ -128,17 +126,17 @@ export class CommandManager {
     if (answer.environmentIndex === -1) {
       const added = await this.addEnvironmentInteractive()
       if (added) {
-        return this.selectEnvironmentInteractive() // Recarrega a lista
+        return this.selectEnvironmentInteractive()
       }
       return null
     }
 
     const selected = environments[answer.environmentIndex]
 
-    // Mostra ambiente selecionado
+
     console.log(chalk.cyan("\n📋 Ambiente selecionado:"))
     console.log(chalk.white(`   🌐 Nome: ${selected.name}`))
-    console.log(chalk.white(`   🔗 URL: ${selected.url}`))
+    console.log(chalk.white(`   🔗 Host: ${selected.url}`))
     console.log(chalk.white(`   🚪 Porta: ${selected.port}`))
     console.log(chalk.white(`   👤 Usuário: ${selected.username}`))
 
@@ -155,7 +153,6 @@ export class CommandManager {
       return selected
     }
 
-    // Se não confirmou, volta ao menu de seleção
     return this.selectEnvironmentInteractive()
   }
 
@@ -222,11 +219,10 @@ export class CommandManager {
         },
       ])
 
-      // Mostra preview do ambiente
       console.log(chalk.yellow.bold("\n📋 Preview do novo ambiente:"))
       console.log(chalk.gray("─".repeat(40)))
       console.log(chalk.white("Nome: ") + chalk.cyan(answers.name))
-      console.log(chalk.white("URL: ") + chalk.blue(answers.url))
+      console.log(chalk.white("Host: ") + chalk.blue(answers.url))
       console.log(chalk.white("Porta: ") + chalk.yellow(answers.port))
       console.log(chalk.white("Usuário: ") + chalk.magenta(answers.username))
       console.log(chalk.white("Senha: ") + chalk.gray("*".repeat(answers.password.length)))
@@ -312,12 +308,5 @@ export class CommandManager {
     ])
 
     return answer.confirm
-  }
-
-  /**
-   * Obtém a instância do programa Commander.
-   */
-  getProgram(): Command {
-    return this.program
   }
 }

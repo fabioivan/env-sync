@@ -29,8 +29,7 @@ export class DatabaseManager {
   }
 
   /**
-   * Conecta no banco de dados e busca as bases que começam com 'hemp'
-   * e não terminam com 'vdi' ou 'paygw', junto com o nome do cliente
+   * Busca as bases que começam com 'hemp' e não terminam com 'vdi' ou 'paygw'
    */
   async getHempDatabases(): Promise<DatabaseInfo[]> {
     const client = new Client({
@@ -38,13 +37,12 @@ export class DatabaseManager {
       port: this.config.port,
       user: this.config.user,
       password: this.config.password,
-      database: "postgres", // Conecta no banco padrão para listar databases
+      database: "postgres",
     })
 
     try {
       await client.connect()
 
-      // Busca todas as databases que começam com hemp
       const databasesQuery = `
         SELECT datname as database_name
         FROM pg_database
@@ -64,7 +62,6 @@ export class DatabaseManager {
 
       await client.end()
 
-      // Para cada database, conecta e busca o nome do cliente
       const databaseInfos: DatabaseInfo[] = []
 
       for (const dbName of databases) {
@@ -79,7 +76,6 @@ export class DatabaseManager {
 
           await dbClient.connect()
 
-          // Busca o nome do cliente na tabela companies
           const clientQuery = `
             SELECT name_2 as client_name
             FROM companies
@@ -100,7 +96,6 @@ export class DatabaseManager {
           await dbClient.end()
         } catch (error) {
           console.log(chalk.yellow(`⚠️  Erro ao acessar database ${dbName}: ${error}`))
-          // Adiciona mesmo com erro para não perder a database da lista
           databaseInfos.push({
             databaseName: dbName,
             clientName: "Erro ao buscar cliente",

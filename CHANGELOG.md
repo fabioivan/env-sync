@@ -58,7 +58,7 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 - **Integração Docker**: Detecção automática e rebuild do container SynAuth
 - **Detecção de Versão Docker**: Suporte automático para `docker compose` vs `docker-compose`
 - **Interface CLI**: Interface de linha de comando amigável em português
-- **Comando Global**: Disponível globalmente via `env-sync`
+- **Comando Global**: Disponível globalmente via `env-updater`
 
 #### 🐳 Funcionalidades Docker
 - **Detecção SynAuth**: Identifica automaticamente mudanças no projeto SynAuth
@@ -76,8 +76,8 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 - **Figlet**: ASCII art para banner
 
 #### 📦 Configuração NPM
-- **Pacote Scoped**: `@fabioivan/env-sync`
-- **Comando Global**: `env-sync`
+- **Pacote Scoped**: `@fabioivan/env-updater`
+- **Comando Global**: `env-updater`
 - **Build Automático**: Scripts de build para produção
 - **Shebang**: Configuração automática para execução
 - **Permissões**: Configuração automática de arquivo executável

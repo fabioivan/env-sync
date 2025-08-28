@@ -50,7 +50,6 @@ export class PortUpdater {
       if (this.updatePortInFile(filePath, newPort)) {
         this.updatedFiles.push(filePath)
 
-        // Verifica se é arquivo do SynAuth
         if (this.isSynAuthFile(filePath)) {
           this.synAuthUpdatedFiles.push(filePath)
         }
@@ -71,14 +70,12 @@ export class PortUpdater {
   updatePortInFile(filePath: string, newPort: string): boolean {
     console.log(`\nProcessando: ${filePath}`)
 
-    // Lê o conteúdo do arquivo
     const content = this.fileFinder.readDatabaseSettings(filePath)
     if (content === null) {
       console.error(`Erro: Não foi possível ler o arquivo ${filePath}`)
       return false
     }
 
-    // Encontra as connection strings
     const connectionKeys = this.fileFinder.findConnectionStrings(content)
 
     if (connectionKeys.length === 0) {
@@ -88,7 +85,6 @@ export class PortUpdater {
 
     console.log(`Connection strings encontradas: ${connectionKeys.join(", ")}`)
 
-    // Atualiza as portas
     let updated = false
     for (const keyPath of connectionKeys) {
       if (this.updatePortByKeyPath(content, keyPath, newPort)) {
@@ -97,7 +93,6 @@ export class PortUpdater {
     }
 
     if (updated) {
-      // Salva o arquivo atualizado
       if (this.fileFinder.writeDatabaseSettings(filePath, content)) {
         console.log(`✅ Arquivo atualizado com sucesso: ${filePath}`)
         return true
@@ -126,7 +121,6 @@ export class PortUpdater {
       return false
     }
 
-    // Extrai a porta atual
     const currentPort = this.fileFinder.extractPortFromConnectionString(connectionString)
 
     if (currentPort === null) {
@@ -139,13 +133,11 @@ export class PortUpdater {
       return false
     }
 
-    // Atualiza a porta
     const updatedConnectionString = this.fileFinder.updatePortInConnectionString(
       connectionString,
       newPort,
     )
 
-    // Salva a string atualizada
     if (this.fileFinder.setValueByKeyPath(content, keyPath, updatedConnectionString)) {
       console.log(`✅ Porta atualizada em ${keyPath}: ${currentPort} → ${newPort}`)
       return true
@@ -277,10 +269,8 @@ export class PortUpdater {
     const dockerManager = new DockerManager()
 
     try {
-      // Informa sobre o restart e confirma automaticamente
       dockerManager.askForSynAuthRestart()
 
-      // Encontra o diretório do projeto SynAuth
       const synAuthFile = this.synAuthUpdatedFiles[0]
       const projectRoot = dockerManager.findSynAuthProjectRoot(synAuthFile)
 

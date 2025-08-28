@@ -1,4 +1,4 @@
-import * as crypto from "crypto"
+import * as crypto from "node:crypto"
 
 /**
  * Classe utilitária para operações MD5 (equivalente ao MD5Util do C#)
@@ -76,7 +76,6 @@ class CryptValues {
       const encodedInput = Base64Util.decode(Base64Util.decode(parts[1]))
       const secretHash = Base64Util.decode(parts[2])
 
-      // Valida os hashes (case insensitive como no C#)
       const expectedSaltHash = MD5Util.create(this._salt)
       const expectedSecretHash = MD5Util.create(this._secret)
 
@@ -94,21 +93,21 @@ class CryptValues {
   }
 
   /**
-   * Método estático para criptografar (equivalente ao EncryptInput do C#)
+   * Método estático para criptografar
    */
   static encryptInput(input: string): string {
     return new CryptValues().encrypt(input)
   }
 
   /**
-   * Método estático para descriptografar (equivalente ao DecryptInput do C#)
+   * Método estático para descriptografar
    */
   static decryptInput(input: string): string | null {
     return new CryptValues().decrypt(input)
   }
 
   /**
-   * Descriptografa e deserializa JSON (equivalente ao método genérico do C#)
+   * Descriptografa e deserializa JSON
    */
   decryptJson<T>(input: string): T | null {
     const decrypted = this.decrypt(input)
@@ -125,7 +124,7 @@ class CryptValues {
 }
 
 /**
- * Classe SynData - equivalente ao C#
+ * Classe SynData
  */
 export class SynData {
   private synHost: string

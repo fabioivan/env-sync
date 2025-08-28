@@ -1,4 +1,4 @@
-# 🔧 Env-Sync - Gerenciador de Configurações de Banco de Dados
+# 🔧 Env-Updater - Gerenciador de Configurações de Banco de Dados
 
 Uma ferramenta Node.js/TypeScript completa para gerenciar configurações de banco de dados em múltiplos projetos C# e React. Permite trocar rapidamente entre ambientes e gerar SynData para sistemas React.
 
@@ -30,8 +30,8 @@ Uma ferramenta Node.js/TypeScript completa para gerenciar configurações de ban
 
 1. Clone o projeto:
 ```bash
-git clone https://github.com/fabioivan/env-sync.git
-cd env-sync
+git clone https://github.com/fabioivan/env-updater.git
+cd env-updater
 ```
 
 2. Configure o comando global para desenvolvimento:
@@ -41,7 +41,7 @@ npm run setup:global
 
 3. Teste a instalação:
 ```bash
-env-sync --help
+env-updater --help
 ```
 
 ## 📖 Como Usar
@@ -50,7 +50,7 @@ env-sync --help
 
 Execute o programa (instalação global):
 ```bash
-env-sync
+env-updater
 ```
 
 Ou durante desenvolvimento:
@@ -76,22 +76,22 @@ O programa exibirá um menu com duas opções:
 
 ```bash
 # Comando principal
-env-sync
+env-updater
 
 # Lista ambientes
-env-sync list
+env-updater list
 
 # Adiciona ambiente
-env-sync add
+env-updater add
 
 # Remove ambiente
-env-sync remove "Nome do Ambiente"
+env-updater remove "Nome do Ambiente"
 
 # Ajuda
-env-sync --help
+env-updater --help
 
 # Versão
-env-sync --version
+env-updater --version
 ```
 
 Na primeira execução, você será solicitado a configurar seu primeiro ambiente:
@@ -111,7 +111,7 @@ Na primeira execução, você será solicitado a configurar seu primeiro ambient
 ### Gerenciamento de Ambientes
 
 - **Adicionar Ambiente**: Durante a seleção, escolha a opção "0"
-- **Configurações Salvas**: Localizadas em `~/.env-sync/environments.json`
+- **Configurações Salvas**: Localizadas em `~/.env-updater/environments.json`
 
 ## 🔍 Formatos de Connection String Suportados
 
@@ -123,21 +123,21 @@ Na primeira execução, você será solicitado a configurar seu primeiro ambient
 ## 📋 Exemplo de Uso
 
 ```bash
-$ env-sync
+$ env-updater
 
 ============================================================
-🔧 ENV-SYNC - Gerenciador de Configurações de Banco
+🔧 ENV-UPDATER - Gerenciador de Configurações de Banco
 ============================================================
 
 🌍 Ambientes disponíveis:
 ----------------------------------------
 1. Desenvolvimento Local
-   URL: localhost
+   Host: 127.0.0.1
    Porta: 5432
    Usuário: postgres
 
 2. Teste
-   URL: test-server
+   Host: 127.0.0.2
    Porta: 5433
    Usuário: test_user
 
@@ -196,7 +196,7 @@ A funcionalidade **"Criar SynData"** utiliza **100% compatibilidade** com o sist
 
 Para ver informações de ajuda:
 ```bash
-env-sync --help
+env-updater --help
 ```
 
 Ou durante o desenvolvimento:

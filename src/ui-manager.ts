@@ -2,7 +2,7 @@ import chalk from "chalk"
 import figlet from "figlet"
 import boxen from "boxen"
 import Table from "cli-table3"
-import ora from "ora"
+import ora, { Ora } from "ora"
 import { Environment } from "./config-manager"
 import { PreviewChanges } from "./port-updater"
 
@@ -17,7 +17,7 @@ export class UIManager {
   showBanner(): void {
     console.clear()
 
-    const title = figlet.textSync("ENV-SYNC", {
+    const title = figlet.textSync("ENV-UPDATER", {
       font: "ANSI Shadow",
       horizontalLayout: "default",
       verticalLayout: "default",
@@ -28,7 +28,7 @@ export class UIManager {
       "\n\n" +
       chalk.white("🔧 Gerenciador de Configurações de Ambientes") +
       "\n" +
-      chalk.gray("Sincronize portas de banco de dados em projetos C#"),
+      chalk.gray("Sincronize portas de banco de dados em projetos C# e React com suporte a Docker"),
       {
         padding: 1,
         margin: 1,
@@ -87,12 +87,6 @@ export class UIManager {
     })
 
     console.log(table.toString())
-
-    // Opções adicionais
-    console.log(chalk.gray("\n📌 Opções adicionais:"))
-    console.log(chalk.white("  0. ") + chalk.green("Adicionar novo ambiente"))
-    console.log(chalk.white("  q. ") + chalk.red("Sair"))
-    console.log()
   }
 
   /**
@@ -121,11 +115,9 @@ export class UIManager {
     Object.entries(preview).forEach(([filePath, changes]) => {
       totalChanges += changes.length
 
-      // Header do arquivo
       console.log(chalk.blue.bold(`\n📁 ${this.getRelativePath(filePath)}`))
       console.log(chalk.gray("   " + "─".repeat(60)))
 
-      // Lista as mudanças
       changes.forEach((change) => {
         const [keyPath, portChange] = change.split(": ")
         const [oldPort, newPortDisplay] = portChange.split(" → ")
@@ -140,7 +132,6 @@ export class UIManager {
       })
     })
 
-    // Resumo
     const summary = boxen(
       chalk.white.bold("📊 Resumo:") + "\n" +
       chalk.cyan(`   • Arquivos a serem modificados: ${Object.keys(preview).length}`) + "\n" +
@@ -185,7 +176,7 @@ export class UIManager {
   /**
    * Exibe progresso da operação.
    */
-  showProgress(message: string): ora.Ora {
+  showProgress(message: string): Ora {
     return ora({
       text: chalk.cyan(message),
       spinner: "dots",
@@ -218,7 +209,6 @@ export class UIManager {
       console.log(chalk.yellow("ℹ️  Nenhum arquivo foi processado."))
     }
 
-    // Box final
     const totalFiles = updatedFiles.length + failedFiles.length
     const successRate = totalFiles > 0 ? Math.round((updatedFiles.length / totalFiles) * 100) : 0
 
@@ -326,7 +316,7 @@ export class UIManager {
 
     const footer = boxen(
       chalk.gray("Para mais informações, visite: ") +
-      chalk.blue("https://github.com/fabioivan/env-sync"),
+      chalk.blue("https://github.com/fabioivan/env-updater"),
       {
         padding: 1,
         margin: 1,
@@ -343,7 +333,7 @@ export class UIManager {
    * Converte caminho absoluto em relativo mais legível.
    */
   private getRelativePath(fullPath: string): string {
-    const homePath = require("os").homedir()
+    const homePath = require("node:os").homedir()
     if (fullPath.startsWith(homePath)) {
       return "~" + fullPath.substring(homePath.length)
     }
@@ -357,7 +347,7 @@ export class UIManager {
     const selectedBox = boxen(
       chalk.green.bold("✅ Ambiente Selecionado") + "\n\n" +
       chalk.white.bold("Nome: ") + chalk.cyan(environment.name) + "\n" +
-      chalk.white.bold("URL: ") + chalk.blue(environment.url) + "\n" +
+      chalk.white.bold("Host: ") + chalk.blue(environment.url) + "\n" +
       chalk.white.bold("Porta: ") + chalk.yellow(environment.port) + "\n" +
       chalk.white.bold("Usuário: ") + chalk.magenta(environment.username),
       {

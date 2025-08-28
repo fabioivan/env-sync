@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Env-Sync - Ferramenta para sincronização de configurações de banco de dados
+ * Environment-Updater - Ferramenta para sincronização de configurações de banco de dados
  * Gerencia portas de banco de dados e SynData em múltiplos projetos C#/React
  */
 
@@ -15,9 +15,9 @@ import { SynDataManager } from "./syndata-manager"
 import { LastEnvironmentManager } from "./last-environment-manager"
 
 /**
- * Aplicação principal do Env-Sync.
+ * Aplicação principal do Environment-Updater.
  */
-export class EnvSyncApp {
+export class EnvironmentUpdaterApp {
   private configManager: ConfigManager
   private portUpdater: PortUpdater
   private inputHandler: InputHandler
@@ -41,7 +41,6 @@ export class EnvSyncApp {
    */
   async run(): Promise<void> {
     try {
-      // Exibe o menu principal
       const operation = await this.cliMenu.showMainMenu()
 
       switch (operation) {
@@ -74,20 +73,16 @@ export class EnvSyncApp {
    */
   private async handleChangeEnvironment(): Promise<void> {
     try {
-      // Seleção de ambiente com interface melhorada
       const environment = await this.commandManager.selectEnvironmentInteractive()
       if (!environment) {
         this.uiManager.showWarning("Nenhum ambiente selecionado.")
         return
       }
 
-      // Salva como último ambiente usado
       this.lastEnvManager.saveLastEnvironment(environment)
 
-      // Mostra prévia das mudanças
       this.showPreview(environment.port)
 
-      // Confirma a execução
       const shouldContinue = await this.commandManager.showConfirmationMenu(
         `Você está prestes a atualizar a porta para ${environment.port} em todos os arquivos encontrados.`,
       )
@@ -96,7 +91,6 @@ export class EnvSyncApp {
         return
       }
 
-      // Executa a atualização
       await this.executeUpdate(environment.port)
     } catch (error) {
       this.cliMenu.showError("Erro ao trocar ambiente", error as Error)
@@ -108,24 +102,20 @@ export class EnvSyncApp {
    */
   private async handleCreateSynData(): Promise<void> {
     try {
-      // 1. Seleciona ou usa último ambiente
       const environment = await this.selectEnvironmentForSynData()
       if (!environment) {
         this.uiManager.showWarning("Nenhum ambiente selecionado.")
         return
       }
 
-      // 2. Cria o gerenciador de SynData
       const synDataManager = new SynDataManager(environment)
 
-      // 3. Valida pré-requisitos
       const validation = synDataManager.validatePrerequisites()
       if (!validation.valid) {
         this.cliMenu.showError(validation.message)
         return
       }
 
-      // 4. Busca bases de dados disponíveis
       const spinner = this.uiManager.showProgress("Conectando ao banco de dados...")
       const databases = await synDataManager.getAvailableDatabases()
       spinner.succeed("Bases de dados carregadas!")
@@ -135,33 +125,27 @@ export class EnvSyncApp {
         return
       }
 
-      // 5. Usuário seleciona a base
       const selectedDatabase = await this.cliMenu.showDatabaseMenu(databases)
 
-      // 6. Seleciona usuário da base de dados
       const selectedUser = await synDataManager.selectUserFromDatabase(selectedDatabase)
       if (!selectedUser) {
         this.uiManager.showWarning("Operação cancelada: nenhum usuário selecionado.")
         return
       }
 
-      // 7. Gera preview do SynData
       const synData = synDataManager.generateSynData(environment, selectedDatabase)
       const previewData = synDataManager.generateEnvPreview(synData)
 
-      // 8. Confirma as mudanças
       const shouldUpdate = await this.cliMenu.confirmFileUpdate(previewData)
       if (!shouldUpdate) {
         this.uiManager.showWarning("Operação cancelada.")
         return
       }
 
-      // 9. Executa a atualização do SynData
       const updateSpinner = this.uiManager.showProgress("Atualizando arquivos .env.development...")
       const result = synDataManager.updateEnvFiles(synData)
       updateSpinner.succeed("Arquivos atualizados!")
 
-      // 10. Atualiza credenciais do usuário selecionado
       const credentialsSpinner = this.uiManager.showProgress("Atualizando credenciais do usuário...")
       const credentialsResult = synDataManager.updateUserCredentials({
         username: selectedUser.login,
@@ -173,7 +157,6 @@ export class EnvSyncApp {
         this.uiManager.showWarning(`${credentialsResult.failedFiles.length} arquivo(s) falharam na atualização de credenciais`)
       }
 
-      // 11. Exibe resumo
       const details = [
         `${result.updatedFiles.length} arquivo(s) atualizado(s) com SynData`,
         `${credentialsResult.updatedFiles.length} arquivo(s) atualizado(s) com credenciais`,
@@ -189,7 +172,6 @@ export class EnvSyncApp {
 
       this.cliMenu.showSuccess("SynData e credenciais criados com sucesso!", details)
 
-      // 12. Salva como último ambiente usado
       this.lastEnvManager.saveLastEnvironment(environment)
     } catch (error) {
       this.cliMenu.showError("Erro ao criar SynData", error as Error)
@@ -215,7 +197,6 @@ export class EnvSyncApp {
       }
     }
 
-    // Se não quer usar o último ou não existe, seleciona interativamente
     return await this.commandManager.selectEnvironmentInteractive()
   }
 
@@ -244,8 +225,6 @@ export class EnvSyncApp {
       throw error
     }
 
-    // Verifica se houve atualizações no SynAuth e oferece restart do Docker
-    // Esta chamada fica FORA do try-catch para não interromper o fluxo
     await this.portUpdater.handleSynAuthDockerRestart()
   }
 
@@ -263,26 +242,19 @@ export class EnvSyncApp {
 async function main(): Promise<void> {
   const args = process.argv.slice(2)
 
-  // Se não há argumentos ou é o comando start, executa a aplicação principal
   if (args.length === 0 || args[0] === "start") {
-    const app = new EnvSyncApp()
+    const app = new EnvironmentUpdaterApp()
     await app.run()
     return
   }
 
-  // Para outros comandos, cria uma instância apenas para processar comandos
   const uiManager = new UIManager()
   const configManager = new ConfigManager()
   const commandManager = new CommandManager(uiManager, configManager)
 
-  try {
-    commandManager.parseArguments(process.argv)
-  } finally {
-    // Não há mais InputHandler para fechar
-  }
+  commandManager.parseArguments(process.argv)
 }
 
-// Executa apenas se este arquivo for executado diretamente
 if (require.main === module) {
   main().catch((error) => {
     console.error("Erro fatal:", error)

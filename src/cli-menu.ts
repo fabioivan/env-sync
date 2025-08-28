@@ -20,6 +20,7 @@ export class CLIMenu {
    * Exibe o menu principal da aplicação
    */
   async showMainMenu(): Promise<string> {
+    console.clear()
     this.uiManager.showBanner()
 
     console.log(chalk.cyan("\n🛠️  Selecione uma operação:"))
@@ -43,15 +44,6 @@ export class CLIMenu {
       },
     ]
 
-    // Exibe descrições das opções
-    choices.forEach((choice, index) => {
-      if (choice.value !== "exit") {
-        console.log(chalk.white(`${index + 1}. ${choice.name}`))
-        console.log(chalk.gray(`   ${choice.description}`))
-        console.log("")
-      }
-    })
-
     const answer = await inquirer.prompt([
       {
         type: "list",
@@ -60,6 +52,7 @@ export class CLIMenu {
         choices: choices.map((choice) => ({
           name: choice.name,
           value: choice.value,
+          description: choice.description,
         })),
         pageSize: choices.length,
       },
@@ -87,7 +80,6 @@ export class CLIMenu {
       short: db.databaseName,
     }))
 
-    // Adiciona opção para cancelar
     choices.push({
       name: chalk.gray("❌ Cancelar operação"),
       value: "cancel",
@@ -123,7 +115,6 @@ export class CLIMenu {
     console.log(chalk.cyan("\n📋 Preview das mudanças:"))
     console.log(chalk.gray("─".repeat(70)))
 
-    // Exibe preview dos arquivos que serão modificados
     previewData.forEach((file, index) => {
       console.log(chalk.white(`${index + 1}. ${file.filePath}`))
 
@@ -280,7 +271,6 @@ export class CLIMenu {
       short: user.login,
     }))
 
-    // Adiciona opções de navegação com tipo union
     const actionChoices = [
       {
         name: chalk.gray("🔍 Nova pesquisa"),

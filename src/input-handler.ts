@@ -1,4 +1,4 @@
-import * as readline from "readline"
+import * as readline from "node:readline"
 
 /**
  * Classe para lidar com entrada do usuário de forma síncrona
@@ -25,19 +25,6 @@ export class InputHandler {
   }
 
   /**
-   * Solicita entrada obrigatória do usuário
-   */
-  async requiredInput(prompt: string, errorMessage?: string): Promise<string> {
-    while (true) {
-      const input = await this.question(prompt)
-      if (input) {
-        return input
-      }
-      console.log(errorMessage || "❌ Este campo é obrigatório!")
-    }
-  }
-
-  /**
    * Solicita confirmação do usuário (s/n)
    */
   async confirm(prompt: string): Promise<boolean> {
@@ -52,37 +39,6 @@ export class InputHandler {
       } else {
         console.log("❌ Por favor, responda com 's' para sim ou 'n' para não.")
       }
-    }
-  }
-
-  /**
-   * Solicita seleção de uma opção numérica
-   */
-  async selectOption(
-    prompt: string,
-    maxOption: number,
-    allowZero: boolean = false,
-  ): Promise<number | null> {
-    while (true) {
-      const input = await this.question(prompt)
-
-      if (input.toLowerCase() === "q") {
-        return null
-      }
-
-      const option = parseInt(input, 10)
-
-      if (isNaN(option)) {
-        console.log("❌ Por favor, digite um número válido!")
-        continue
-      }
-
-      const minOption = allowZero ? 0 : 1
-      if (option >= minOption && option <= maxOption) {
-        return option
-      }
-
-      console.log("❌ Opção inválida!")
     }
   }
 

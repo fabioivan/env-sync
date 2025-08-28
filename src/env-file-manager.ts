@@ -1,5 +1,5 @@
-import * as fs from "fs"
-import * as path from "path"
+import * as fs from "node:fs"
+import * as path from "node:path"
 import chalk from "chalk"
 
 export interface EnvFileInfo {
@@ -169,7 +169,6 @@ export class EnvFileManager {
     for (const filePath of envFiles) {
       const currentValue = this.getCurrentSynData(filePath)
 
-      // Só inclui no preview se a variável já existe no arquivo
       if (currentValue !== null) {
         previewData.push({
           filePath,
@@ -237,7 +236,6 @@ export class EnvFileManager {
       try {
         const currentCredentials = this.getCurrentUserCredentials(filePath)
 
-        // Só processa arquivos que já contêm as variáveis de credenciais
         if (currentCredentials !== null) {
           previewData.push({
             filePath,
@@ -275,7 +273,6 @@ export class EnvFileManager {
       let usernameFound = false
       let passwordFound = false
 
-      // Procura pelas linhas existentes e atualiza
       for (let i = 0; i < lines.length; i++) {
         const trimmedLine = lines[i].trim()
         if (trimmedLine.startsWith("REACT_APP_USERNAME=")) {
@@ -289,13 +286,11 @@ export class EnvFileManager {
         }
       }
 
-      // Se as variáveis não existem, não faz nada
       if (!usernameFound || !passwordFound) {
         console.log(chalk.yellow(`\n⚠️  Variáveis de credenciais não encontradas em ${filePath}, pulando arquivo`))
         return false
       }
 
-      // Salva o arquivo apenas se houve mudança
       if (updated) {
         fs.writeFileSync(filePath, lines.join("\n"), "utf8")
         return true
@@ -319,7 +314,6 @@ export class EnvFileManager {
       let updated = false
       let syndataFound = false
 
-      // Procura pela linha existente e atualiza
       for (let i = 0; i < lines.length; i++) {
         const trimmedLine = lines[i].trim()
         if (trimmedLine.startsWith("REACT_APP_SYNDATA=")) {
@@ -330,13 +324,11 @@ export class EnvFileManager {
         }
       }
 
-      // Se a variável não existe, não faz nada (diferente do comportamento anterior)
       if (!syndataFound) {
         console.log(chalk.yellow(`⚠️  Variável REACT_APP_SYNDATA não encontrada em ${filePath}, pulando arquivo`))
         return false
       }
 
-      // Salva o arquivo apenas se houve mudança
       if (updated) {
         fs.writeFileSync(filePath, lines.join("\n"), "utf8")
         return true

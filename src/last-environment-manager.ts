@@ -1,15 +1,14 @@
-import * as fs from "fs"
-import * as path from "path"
+import * as fs from "node:fs"
+import * as path from "node:path"
 import { Environment } from "./config-manager"
 
 export class LastEnvironmentManager {
   private readonly lastEnvFile: string
 
   constructor() {
-    const configDir = path.join(process.env.HOME || process.env.USERPROFILE || "", ".env-sync")
+    const configDir = path.join(process.env.HOME || process.env.USERPROFILE || "", ".env-updater")
     this.lastEnvFile = path.join(configDir, "last-environment.json")
 
-    // Garante que o diretório existe
     if (!fs.existsSync(configDir)) {
       fs.mkdirSync(configDir, { recursive: true })
     }
