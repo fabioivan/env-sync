@@ -1,5 +1,5 @@
 {
-  "name": "@fabioivan/env-sync",
+  "name": "@grupovoalle/env-sync",
   "version": "1.0.0",
   "description": "Ferramenta para sincronização automática de configurações de banco de dados em projetos C# e React com suporte a Docker",
   "main": "dist/main.js",
@@ -19,16 +19,10 @@
     "help": "npm run dev -- --help",
     "watch": "tsc --watch",
     "add-shebang": "node scripts/add-shebang.js",
-    "prepublishOnly": "npm run build:prod",
     "link:global": "npm run build:prod && npm link",
-    "unlink:global": "npm unlink -g @fabioivan/env-sync",
+    "unlink:global": "npm unlink -g @grupovoalle/env-sync",
     "test:global": "env-sync --help",
-    "version:patch": "npm version patch",
-    "version:minor": "npm version minor",
-    "version:major": "npm version major",
-    "setup:global": "node scripts/setup-global.js",
-    "test:npm": "node scripts/test-npm-package.js",
-    "publish": "node scripts/publish.js"
+    "setup:global": "node scripts/setup-global.js"
   },
   "keywords": [
     "database",
@@ -47,33 +41,30 @@
   ],
   "author": {
     "name": "Fábio Ivan Borchardt",
-    "email": "fabioivan.fb@gmail.com",
+    "email": "fabio.borchardt@grupovoalle.com.br",
     "url": ""
   },
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/fabioivan/env-sync.git"
+    "url": "https://git.syntesis.com.br/GrupoVoalle/Architecture/Environment.Updater#"
   },
-  "bugs": {
-    "url": "https://github.com/fabioivan/env-sync/issues"
-  },
-  "homepage": "https://github.com/fabioivan/env-sync#readme",
+  "homepage": "https://git.syntesis.com.br/GrupoVoalle/Architecture/Environment.Updater#readme",
   "dependencies": {
-    "commander": "^11.0.0",
-    "chalk": "^4.1.2",
-    "figlet": "^1.7.0",
     "boxen": "^5.1.2",
+    "chalk": "^4.1.2",
     "cli-table3": "^0.6.3",
+    "commander": "^11.0.0",
+    "figlet": "^1.7.0",
+    "inquirer": "^8.2.6",
     "ora": "^5.4.1",
-    "pg": "^8.11.0",
-    "inquirer": "^8.2.6"
+    "pg": "^8.11.0"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
     "@types/figlet": "^1.5.6",
-    "@types/pg": "^8.10.0",
     "@types/inquirer": "^8.2.0",
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.10.0",
     "rimraf": "^5.0.0",
     "ts-node": "^10.9.0",
     "typescript": "^5.0.0"

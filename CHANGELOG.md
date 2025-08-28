@@ -96,17 +96,3 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 - **Tratamento de Erros**: Manejo robusto de erros e exceções
 - **Operação Atômica**: Se um arquivo falhar, outros não são afetados
 
-### 📋 Requisitos
-- Node.js >= 16.0.0
-- NPM >= 7.0.0
-- Docker (opcional, para funcionalidade SynAuth)
-
-### 🚀 Instalação
-```bash
-npm install -g @fabioivan/env-sync
-```
-
-### 📖 Uso
-```bash
-env-sync
-```

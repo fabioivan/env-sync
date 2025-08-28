@@ -28,39 +28,18 @@ Uma ferramenta Node.js/TypeScript completa para gerenciar configurações de ban
 
 ## 🚀 Instalação
 
-### 📦 Instalação Global (Recomendada)
-
-```bash
-# Instala globalmente via NPM
-npm install -g @fabioivan/env-sync
-
-# Verifica a instalação
-env-sync --help
-
-# Usa a ferramenta de qualquer diretório
-env-sync
-```
-
-### 🔧 Instalação para Desenvolvimento
-
 1. Clone o projeto:
 ```bash
 git clone https://github.com/fabioivan/env-sync.git
 cd env-sync
 ```
 
-2. Certifique-se de ter Node.js 16+ instalado:
-```bash
-node --version
-npm --version
-```
-
-3. Configure o comando global para desenvolvimento:
+2. Configure o comando global para desenvolvimento:
 ```bash
 npm run setup:global
 ```
 
-4. Teste a instalação:
+3. Teste a instalação:
 ```bash
 env-sync --help
 ```
@@ -86,7 +65,7 @@ O programa exibirá um menu com duas opções:
 - Mostra preview das mudanças antes de aplicar
 - Oferece rebuild automático do Docker para projetos SynAuth
 
-#### 🔧 **Criar SynData** 
+#### 🔧 **Criar SynData**
 - Conecta no banco do ambiente selecionado
 - Lista bases que começam com `hemp`
 - Permite selecionar uma base específica
@@ -105,7 +84,7 @@ env-sync list
 # Adiciona ambiente
 env-sync add
 
-# Remove ambiente  
+# Remove ambiente
 env-sync remove "Nome do Ambiente"
 
 # Ajuda
@@ -135,30 +114,6 @@ Na primeira execução, você será solicitado a configurar seu primeiro ambient
 - **Configurações Salvas**: Localizadas em `~/.env-sync/environments.json`
 
 ## 🔍 Formatos de Connection String Suportados
-
-A ferramenta reconhece e atualiza os seguintes formatos:
-
-```json
-{
-  "ConnectionString": "Server=localhost;Port=5432;Database=mydb;User Id=user;Password=pass;"
-}
-```
-
-```json
-{
-  "Database": {
-    "Connection": "Data Source=localhost:5432;Initial Catalog=mydb;User ID=user;Password=pass;"
-  }
-}
-```
-
-```json
-{
-  "Settings": {
-    "DbConnection": "server=localhost,5432;database=mydb;uid=user;pwd=pass;"
-  }
-}
-```
 
 ## 🛡️ Segurança
 
@@ -233,21 +188,9 @@ A funcionalidade **"Criar SynData"** utiliza **100% compatibilidade** com o sist
 
 ### ✅ **Características Garantidas:**
 - **Mesmo algoritmo de criptografia** do sistema C#
-- **Mesmos valores de salt e secret** 
+- **Mesmos valores de salt e secret**
 - **Formato idêntico** dos dados criptografados
 - **Interoperabilidade total** entre sistemas
-
-### 🔧 **Classe CryptValues Convertida:**
-```typescript
-// Valores exatos do sistema C# original
-private _salt = "0UgQLJiESKyELbVqsgrLJsFXSIF";
-private _secret = "parangaricutirimirruaro";
-
-// Algoritmo: Base64(Base64(MD5(salt)):Base64(Base64(input)):Base64(MD5(secret)))
-```
-
-### 📋 **Para Mais Detalhes:**
-Consulte o arquivo [`CRYPTO_COMPATIBILITY.md`](./CRYPTO_COMPATIBILITY.md) para documentação técnica completa sobre a implementação da criptografia.
 
 ## 🆘 Ajuda
 
@@ -259,28 +202,6 @@ env-sync --help
 Ou durante o desenvolvimento:
 ```bash
 npm run dev -- --help
-```
-
-### Desinstalação
-
-Para remover a ferramenta:
-```bash
-npm uninstall -g @fabioivan/env-sync
-```
-
-### 📦 Para Desenvolvimento e Publicação:
-```bash
-# Testa se está pronto para publicar
-npm run test:npm
-
-# Publica nova versão (com incremento automático)
-npm run publish
-
-# Comandos manuais alternativos:
-npm run version:patch    # Incrementa versão patch
-npm run version:minor    # Incrementa versão minor
-npm run version:major    # Incrementa versão major
-npm publish             # Publica versão atual
 ```
 
 ## 🔧 Solução de Problemas
