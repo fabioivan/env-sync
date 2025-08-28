@@ -30,7 +30,7 @@ export class SynDataManager {
    */
   async getAvailableDatabases(): Promise<DatabaseInfo[]> {
     try {
-      console.log(chalk.cyan("🔍 Buscando bases de dados disponíveis..."))
+      console.log(chalk.cyan("\n🔍 Buscando bases de dados disponíveis...\n"))
 
       // Testa a conexão primeiro
       const connectionTest = await this.databaseManager.testConnection()
@@ -69,7 +69,7 @@ export class SynDataManager {
 
       return encryptedSynData
     } catch (error) {
-      console.error(chalk.red(`❌ Erro ao gerar SynData: ${error}`))
+      console.error(chalk.red(`\n❌ Erro ao gerar SynData: ${error}`))
       throw error
     }
   }
@@ -79,19 +79,19 @@ export class SynDataManager {
    */
   generateEnvPreview(synData: string): any[] {
     try {
-      console.log(chalk.cyan("🔍 Gerando preview das mudanças..."))
+      console.log(chalk.cyan("\n🔍 Gerando preview das mudanças..."))
 
       const previewData = this.envFileManager.generatePreview(synData)
 
       if (previewData.length === 0) {
-        console.log(chalk.yellow("⚠️  Nenhum arquivo .env.development encontrado"))
+        console.log(chalk.yellow("\n⚠️  Nenhum arquivo .env.development encontrado"))
         return []
       }
 
-      console.log(chalk.green(`✅ ${previewData.length} arquivo(s) .env.development encontrado(s)`))
+      console.log(chalk.green(`\n✅ ${previewData.length} arquivo(s) .env.development encontrado(s)`))
       return previewData
     } catch (error) {
-      console.error(chalk.red(`❌ Erro ao gerar preview: ${error}`))
+      console.error(chalk.red(`\n❌ Erro ao gerar preview: ${error}`))
       throw error
     }
   }
@@ -101,23 +101,25 @@ export class SynDataManager {
    */
   updateEnvFiles(synData: string): EnvUpdateResult {
     try {
-      console.log(chalk.cyan("🔄 Atualizando arquivos .env.development..."))
+      console.log(chalk.cyan("\n🔄 Atualizando arquivos .env.development..."))
 
       const result = this.envFileManager.updateSynDataInAllFiles(synData)
 
       if (result.updatedFiles.length > 0) {
         console.log(
-          chalk.green(`✅ ${result.updatedFiles.length} arquivo(s) atualizado(s) com sucesso`),
+          chalk.green(`\n✅ ${result.updatedFiles.length} arquivo(s) atualizado(s) com sucesso`),
         )
       }
 
       if (result.failedFiles.length > 0) {
-        console.log(chalk.red(`❌ ${result.failedFiles.length} arquivo(s) falharam na atualização`))
+        console.log(
+          chalk.red(`\n❌ ${result.failedFiles.length} arquivo(s) falharam na atualização`),
+        )
       }
 
       return result
     } catch (error) {
-      console.error(chalk.red(`❌ Erro ao atualizar arquivos: ${error}`))
+      console.error(chalk.red(`\n❌ Erro ao atualizar arquivos: ${error}`))
       throw error
     }
   }

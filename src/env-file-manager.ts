@@ -23,6 +23,7 @@ export class EnvFileManager {
 
   /**
    * Encontra todos os arquivos .env.development na pasta projects
+   * Filtra apenas projetos que contenham 'lerna-repo' ou 'lerna' no nome
    */
   findEnvDevelopmentFiles(): string[] {
     const envFiles: string[] = []
@@ -38,26 +39,36 @@ export class EnvFileManager {
 
   /**
    * Busca recursivamente por arquivos .env.development
+   * Considera apenas projetos que contenham 'lerna-repo' ou 'lerna' no nome
    */
   private searchRecursiveForEnvFiles(directory: string, envFiles: string[]): void {
     try {
       const items = fs.readdirSync(directory, { withFileTypes: true })
+      let lernaProjectPath: string | undefined = undefined
 
       for (const item of items) {
         const fullPath = path.join(directory, item.name)
 
         if (item.isDirectory()) {
-          // Ignora node_modules, .git e outras pastas comuns que devem ser excluídas
           if (this.shouldSkipDirectory(item.name)) {
             continue
           }
-          this.searchRecursiveForEnvFiles(fullPath, envFiles)
+
+          if (!this.isLernaProject(item.name)) {
+            this.searchRecursiveForEnvFiles(fullPath, envFiles)
+          } else {
+            lernaProjectPath = fullPath
+          }
         } else if (item.isFile() && item.name === ".env.development") {
           envFiles.push(fullPath)
         }
       }
+
+      if (lernaProjectPath) {
+        this.searchRecursiveForEnvFiles(lernaProjectPath, envFiles)
+      }
     } catch (error) {
-      // Ignora erros de permissão silenciosamente
+      console.error(chalk.red(`❌ Erro ao buscar arquivos .env.development: ${error}`))
     }
   }
 
@@ -84,6 +95,15 @@ export class EnvFileManager {
   }
 
   /**
+   * Verifica se o diretório é um projeto lerna
+   */
+  private isLernaProject(dirName: string): boolean {
+    const lowerCaseName = dirName.toLowerCase()
+
+    return lowerCaseName.includes("lerna-repo") || lowerCaseName.includes("lerna")
+  }
+
+  /**
    * Lê o valor atual da variável REACT_APP_SYNDATA no arquivo
    */
   getCurrentSynData(filePath: string): string | null {
@@ -106,6 +126,7 @@ export class EnvFileManager {
 
   /**
    * Gera preview das mudanças que serão feitas
+   * Considera apenas arquivos que já contêm a variável REACT_APP_SYNDATA
    */
   generatePreview(newSynData: string): EnvFileInfo[] {
     const envFiles = this.findEnvDevelopmentFiles()
@@ -113,11 +134,17 @@ export class EnvFileManager {
 
     for (const filePath of envFiles) {
       const currentValue = this.getCurrentSynData(filePath)
-      previewData.push({
-        filePath,
-        currentValue,
-        newValue: newSynData,
-      })
+
+      // Só inclui no preview se a variável já existe no arquivo
+      if (currentValue !== null) {
+        previewData.push({
+          filePath,
+          currentValue,
+          newValue: newSynData,
+        })
+      } else {
+        console.log(chalk.yellow(`⚠️  Arquivo ${filePath} não contém REACT_APP_SYNDATA, será ignorado`))
+      }
     }
 
     return previewData
@@ -125,6 +152,7 @@ export class EnvFileManager {
 
   /**
    * Atualiza a variável REACT_APP_SYNDATA em todos os arquivos .env.development
+   * Considera apenas arquivos que já contêm a variável REACT_APP_SYNDATA
    */
   updateSynDataInAllFiles(newSynData: string): EnvUpdateResult {
     const envFiles = this.findEnvDevelopmentFiles()
@@ -135,16 +163,19 @@ export class EnvFileManager {
     for (const filePath of envFiles) {
       try {
         const currentValue = this.getCurrentSynData(filePath)
-        previewData.push({
-          filePath,
-          currentValue,
-          newValue: newSynData,
-        })
 
-        if (this.updateSynDataInFile(filePath, newSynData)) {
-          updatedFiles.push(filePath)
-        } else {
-          failedFiles.push(filePath)
+        if (currentValue !== null) {
+          previewData.push({
+            filePath,
+            currentValue,
+            newValue: newSynData,
+          })
+
+          if (this.updateSynDataInFile(filePath, newSynData)) {
+            updatedFiles.push(filePath)
+          } else {
+            failedFiles.push(filePath)
+          }
         }
       } catch (error) {
         failedFiles.push(filePath)
@@ -161,6 +192,7 @@ export class EnvFileManager {
 
   /**
    * Atualiza a variável REACT_APP_SYNDATA em um arquivo específico
+   * Só atualiza se a variável já existir no arquivo
    */
   private updateSynDataInFile(filePath: string, newSynData: string): boolean {
     try {
@@ -180,10 +212,10 @@ export class EnvFileManager {
         }
       }
 
-      // Se não encontrou, adiciona no final do arquivo
+      // Se a variável não existe, não faz nada (diferente do comportamento anterior)
       if (!syndataFound) {
-        lines.push(`REACT_APP_SYNDATA=${newSynData}`)
-        updated = true
+        console.log(chalk.yellow(`⚠️  Variável REACT_APP_SYNDATA não encontrada em ${filePath}, pulando arquivo`))
+        return false
       }
 
       // Salva o arquivo apenas se houve mudança
